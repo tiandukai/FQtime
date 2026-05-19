@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>真相只有一个 —— 番茄钟</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- 柯南和小兰合照背景 -->
+  <div class="bg-photo" id="bgPhoto"></div>
+  <div class="bg-overlay"></div>
+
+  <!-- 可爱装饰元素 -->
+  <div class="cute-decor">
+    <span class="cute-float c1">🌸</span>
+    <span class="cute-float c2">💕</span>
+    <span class="cute-float c3">⭐</span>
+    <span class="cute-float c4">🌸</span>
+    <span class="cute-float c5">💖</span>
+    <span class="cute-float c6">⭐</span>
+    <span class="cute-float c7">🌸</span>
+    <span class="cute-float c8">💕</span>
+  </div>
+
+  <div class="container">
+    <!-- 顶部标题栏 -->
+    <header class="header">
+      <div class="conan-avatar" id="conanAvatar">
+        <img class="conan-avatar-img" src="https://placehold.co/96x96/1a1a1a/ffffff?text=%F0%9F%94%8D" alt="柯南" onerror="this.parentElement.classList.add('fallback')">
+      </div>
+      <h1 class="title">真相只有一个</h1>
+      <div class="title-underline">
+        <span class="underline-heart">💕</span>
+        <span class="underline-line"></span>
+        <span class="underline-star">⭐</span>
+        <span class="underline-line"></span>
+        <span class="underline-heart">💕</span>
+      </div>
+      <p class="subtitle">江户川柯南 · 可爱番茄钟</p>
+    </header>
+
+    <!-- 鼓励话语 -->
+    <div class="encourage-box" id="encourageBox">
+      <span class="encourage-icon">💪</span>
+      <p class="encourage-text" id="encourageText">加油！真相就在眼前！</p>
+    </div>
+
+    <!-- 计时器核心区域 -->
+    <main class="timer-section">
+      <div class="case-file-card">
+        <div class="case-label">
+          <span class="case-number" id="caseNumber">Case #001</span>
+          <span class="case-status work-status" id="caseStatus">调查中</span>
+        </div>
+
+        <!-- 圆形进度环 -->
+        <div class="timer-ring" id="timerRing">
+          <svg class="progress-ring" viewBox="0 0 200 200">
+            <circle class="ring-dots" cx="100" cy="100" r="94" />
+            <circle class="ring-bg" cx="100" cy="100" r="86" />
+            <circle class="ring-progress work-mode" id="ringProgress" cx="100" cy="100" r="86" />
+            <circle class="ring-glow" id="ringGlow" cx="100" cy="100" r="86" />
+            <circle class="ring-bowtie-dot" cx="100" cy="14" r="4" />
+          </svg>
+          <div class="timer-display">
+            <span class="timer-minutes" id="timerMinutes">45</span>
+            <span class="timer-separator">:</span>
+            <span class="timer-seconds" id="timerSeconds">00</span>
+          </div>
+        </div>
+
+        <!-- 模式标签 -->
+        <div class="mode-row">
+          <div class="mode-indicator work" id="modeIndicator">
+            <span class="mode-dot"></span>
+            <span class="mode-text" id="modeLabel">调查中...</span>
+          </div>
+          <span class="session-divider">|</span>
+          <p class="session-hint" id="sessionHint">第 1 轮</p>
+        </div>
+
+        <!-- 控制按钮 -->
+        <div class="controls">
+          <button class="btn btn-primary" id="btnStart" title="开始/暂停">
+            <span class="btn-icon">▶</span>
+            <span class="btn-text">开始推理</span>
+          </button>
+          <button class="btn btn-icon-only" id="btnReset" title="重置">↺</button>
+          <button class="btn btn-icon-only" id="btnSkip" title="跳过">⏭</button>
+        </div>
+      </div>
+    </main>
+
+
+    <!-- 时间自定义设置 -->
+    <section class="settings-section">
+      <div class="settings-header">
+        <span class="settings-icon">⚙️</span>
+        <h2 class="settings-title">自定义时间</h2>
+      </div>
+      <div class="settings-grid">
+        <div class="setting-item">
+          <label class="setting-label">🔍 调查时间（分钟）</label>
+          <input type="number" class="setting-input" id="workMinutes" min="1" max="120" value="45">
+        </div>
+        <div class="setting-item">
+          <label class="setting-label">☕ 休息时间（分钟）</label>
+          <input type="number" class="setting-input" id="breakMinutes" min="1" max="60" value="5">
+        </div>
+      </div>
+      <button class="btn btn-apply" id="btnApplyTime">应用设置</button>
+    </section>
+
+    <!-- 任务列表 -->
+    <section class="task-section">
+      <div class="task-header">
+        <span class="task-icon">📋</span>
+        <h2 class="task-title">今日案件档案</h2>
+        <span class="task-progress" id="taskProgress">0/8 已解决</span>
+      </div>
+      <div class="task-list" id="taskList"></div>
+      <div class="task-add-row">
+        <input type="text" class="task-add-input" id="taskAddInput" placeholder="＋ 添加自定义案件..." maxlength="30">
+        <button class="btn-task-add" id="btnTaskAdd">添加</button>
+      </div>
+    </section>
+
+    <!-- 统计面板 -->
+    <section class="stats-section">
+      <div class="evidence-header">
+        <span class="evidence-icon">📋</span>
+        <h2 class="stats-title">推理记录档案</h2>
+      </div>
+      <div class="stats-grid">
+        <div class="stat-card">
+          <span class="stat-icon">📁</span>
+          <span class="stat-value" id="statToday">0</span>
+          <span class="stat-label">今日解决案件</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-icon">🏆</span>
+          <span class="stat-value" id="statTotal">0</span>
+          <span class="stat-label">累计解决案件</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-icon">🔥</span>
+          <span class="stat-value" id="statStreak">0</span>
+          <span class="stat-label">连续推理天数</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-icon">⏱</span>
+          <span class="stat-value" id="statFocusTime">0 分钟</span>
+          <span class="stat-label">今日推理时长</span>
+        </div>
+      </div>
+      <div class="daily-goal">
+        <div class="goal-header">
+          <span>今日推理进度</span>
+          <span id="goalLabel">0 / 8 案件</span>
+        </div>
+        <div class="goal-bar">
+          <div class="goal-fill" id="goalFill" style="width: 0%"></div>
+        </div>
+      </div>
+      <button class="btn btn-text" id="btnClearStats">重置档案记录</button>
+    </section>
+
+    <!-- 页脚 -->
+    <footer class="footer">
+      <div class="footer-seal">🔍</div>
+      <p>「推理是不分输赢的，因为真相只有一个！」</p>
+      <p class="footer-by">—— 工藤新一</p>
+    </footer>
+  </div>
+
+  <!-- 足球射门动画弹窗 -->
+  <div class="goal-overlay" id="goalOverlay">
+    <div class="goal-popup">
+      <div class="goal-field">
+        <div class="goal-net">🥅</div>
+        <div class="goal-count" id="goalCount">+1</div>
+        <div class="goal-ball">⚽</div>
+      </div>
+      <p class="goal-text">案件解决！</p>
+      <p class="goal-sub">真相只有一个</p>
+    </div>
+  </div>
+
+  <!-- 眼镜反光效果 -->
+  <div class="glasses-reflection" id="glassesReflection">
+    <div class="glasses-edge glasses-edge-top"></div>
+    <div class="glasses-edge glasses-edge-bottom"></div>
+    <div class="glasses-edge glasses-edge-left"></div>
+    <div class="glasses-edge glasses-edge-right"></div>
+    <div class="glasses-corner glasses-corner-tl"></div>
+    <div class="glasses-corner glasses-corner-tr"></div>
+    <div class="glasses-corner glasses-corner-bl"></div>
+    <div class="glasses-corner glasses-corner-br"></div>
+    <div class="glasses-text" id="glassesText">真相只有一个，该休息了</div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
