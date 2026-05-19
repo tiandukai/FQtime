@@ -4,8 +4,11 @@
    支持自定义时间 + 鼓励话语
    ============================================ */
 
-// ========== 常量配置 ==========
-const DEFAULT_WORK_MINUTES = 45;
+(function () {
+  "use strict";
+
+  // ========== 常量配置 ==========
+  const DEFAULT_WORK_MINUTES = 45;
 const DEFAULT_BREAK_MINUTES = 5;
 const DAILY_GOAL = 8;
 const RING_RADIUS = 86;
@@ -538,7 +541,8 @@ btnStart.addEventListener("click", toggleTimer);
 let resetPressTimer = null;
 let resetPressStart = 0;
 
-btnReset.addEventListener("pointerdown", (e) => {
+function startResetPress(e) {
+  e.preventDefault();
   resetPressStart = Date.now();
   btnReset.classList.add("long-pressing");
   resetPressTimer = setTimeout(() => {
@@ -548,27 +552,25 @@ btnReset.addEventListener("pointerdown", (e) => {
     playClickSound();
     resetPressTimer = null;
   }, 1000);
-});
+}
 
-btnReset.addEventListener("pointerup", () => {
+function endResetPress() {
   btnReset.classList.remove("long-pressing");
   if (resetPressTimer) {
     clearTimeout(resetPressTimer);
     resetPressTimer = null;
-    const elapsed = Date.now() - resetPressStart;
-    if (elapsed < 1000) {
+    if (Date.now() - resetPressStart < 1000) {
       showToast("长按 1 秒以重置");
     }
   }
-});
+}
 
-btnReset.addEventListener("pointerleave", () => {
-  btnReset.classList.remove("long-pressing");
-  if (resetPressTimer) {
-    clearTimeout(resetPressTimer);
-    resetPressTimer = null;
-  }
-});
+btnReset.addEventListener("pointerdown", startResetPress);
+btnReset.addEventListener("touchstart", startResetPress, { passive: false });
+btnReset.addEventListener("pointerup", endResetPress);
+btnReset.addEventListener("touchend", endResetPress);
+btnReset.addEventListener("pointerleave", endResetPress);
+btnReset.addEventListener("touchcancel", endResetPress);
 btnSkip.addEventListener("click", skipSession);
 btnClearStats.addEventListener("click", clearAllStats);
 btnApplyTime.addEventListener("click", applyCustomTime);
@@ -710,4 +712,9 @@ function init() {
   startEncourageRotation();
 }
 
-init();
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", init);
+  } else {
+    init();
+  }
+})();
