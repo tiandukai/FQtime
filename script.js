@@ -593,17 +593,6 @@ document.addEventListener("visibilitychange", () => {
 
 // ========== 任务列表系统 ==========
 const TASK_STORAGE_KEY = "pomodoro_conan_tasks_v1";
-const PRESET_TASKS = [
-  "调查案发现场",
-  "分析不在场证明",
-  "寻找关键线索",
-  "讯问嫌疑人",
-  "整理推理笔记",
-  "锁定真凶",
-  "揭示真相",
-  "撰写结案报告",
-];
-
 function loadTasks() {
   const today = getTodayStr();
   try {
@@ -611,13 +600,7 @@ function loadTasks() {
     const data = raw ? JSON.parse(raw) : null;
     if (data && data.date === today) return data.tasks;
   } catch (e) { /* fall through */ }
-  return PRESET_TASKS.map((name, i) => ({
-    id: "p" + i,
-    name,
-    done: false,
-    isPreset: true,
-    order: i,
-  }));
+  return [];
 }
 
 function saveTasks(tasks) {
@@ -646,7 +629,7 @@ function renderTaskList() {
         <div class="task-card-meta">案件 #${String(t.order + 1).padStart(3, "0")}</div>
       </div>
       <span class="task-card-status ${t.done ? "done" : "in-progress"}">${t.done ? "已结案" : "调查中"}</span>
-      ${t.isPreset ? "" : `<button class="task-card-delete" data-delete-id="${t.id}" title="删除">✕</button>`}
+      <button class="task-card-delete" data-delete-id="${t.id}" title="删除">✕</button>
     </div>
   `).join("");
 
