@@ -202,13 +202,17 @@ function playClickSound() {
 let notificationPermission = "default";
 
 function requestNotificationPermission() {
-  if ("Notification" in window && Notification.permission === "default") {
-    Notification.requestPermission().then((perm) => {
-      notificationPermission = perm;
-    });
-  } else {
-    notificationPermission = Notification.permission;
-  }
+  try {
+    if ("Notification" in window) {
+      if (Notification.permission === "default") {
+        Notification.requestPermission().then((perm) => {
+          notificationPermission = perm;
+        }).catch(function () {});
+      } else {
+        notificationPermission = Notification.permission;
+      }
+    }
+  } catch (e) { /* iOS Safari may lack Notification entirely */ }
 }
 
 function sendNotification(title, body) {
