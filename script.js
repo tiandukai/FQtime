@@ -92,8 +92,8 @@ function loadTimeConfig() {
     const raw = localStorage.getItem("pomodoro_conan_time_config");
     if (raw) {
       const cfg = JSON.parse(raw);
-      if (cfg.workMinutes >= 1 && cfg.workMinutes <= 120) workMinutes = cfg.workMinutes;
-      if (cfg.breakMinutes >= 1 && cfg.breakMinutes <= 60) breakMinutes = cfg.breakMinutes;
+      if (cfg.workMinutes >= 0.1 && cfg.workMinutes <= 120) workMinutes = cfg.workMinutes;
+      if (cfg.breakMinutes >= 0.1 && cfg.breakMinutes <= 60) breakMinutes = cfg.breakMinutes;
     }
   } catch (e) { /* 静默处理 */ }
   applyTimeConfig();
@@ -109,8 +109,8 @@ function saveTimeConfig() {
 }
 
 function applyTimeConfig() {
-  workSeconds = workMinutes * 60;
-  breakSeconds = breakMinutes * 60;
+  workSeconds = Math.round(workMinutes * 60);
+  breakSeconds = Math.round(breakMinutes * 60);
   remainingSeconds = mode === MODE_WORK ? workSeconds : breakSeconds;
   inputWorkMinutes.value = workMinutes;
   inputBreakMinutes.value = breakMinutes;
@@ -396,16 +396,16 @@ function clearAllStats() {
 
 // ========== 自定义时间 ==========
 function applyCustomTime() {
-  const wm = parseInt(inputWorkMinutes.value, 10);
-  const bm = parseInt(inputBreakMinutes.value, 10);
+  const wm = parseFloat(inputWorkMinutes.value);
+  const bm = parseFloat(inputBreakMinutes.value);
 
-  if (isNaN(wm) || wm < 1 || wm > 120) {
-    showToast("调查时间请设置在 1-120 分钟之间");
+  if (isNaN(wm) || wm < 0.1 || wm > 120) {
+    showToast("调查时间请设置在 0.1-120 分钟之间（如 0.5=30秒）");
     inputWorkMinutes.value = workMinutes;
     return;
   }
-  if (isNaN(bm) || bm < 1 || bm > 60) {
-    showToast("休息时间请设置在 1-60 分钟之间");
+  if (isNaN(bm) || bm < 0.1 || bm > 60) {
+    showToast("休息时间请设置在 0.1-60 分钟之间");
     inputBreakMinutes.value = breakMinutes;
     return;
   }
