@@ -107,12 +107,24 @@
       </div>
       <div class="settings-grid">
         <div class="setting-item">
-          <label class="setting-label">🔍 调查时间（分钟）</label>
-          <input type="number" class="setting-input" id="workMinutes" min="0.1" max="120" step="0.5" value="45">
+          <div class="setting-label-row">
+            <label class="setting-label">🔍 调查时间</label>
+            <span class="setting-value" id="workValue">45 分钟</span>
+          </div>
+          <input type="range" class="setting-slider" id="workMinutes" min="1" max="120" value="45">
+          <div class="slider-ticks">
+            <span>1</span><span>30</span><span>60</span><span>90</span><span>120</span>
+          </div>
         </div>
         <div class="setting-item">
-          <label class="setting-label">☕ 休息时间（分钟）</label>
-          <input type="number" class="setting-input" id="breakMinutes" min="0.1" max="60" step="0.5" value="5">
+          <div class="setting-label-row">
+            <label class="setting-label">☕ 休息时间</label>
+            <span class="setting-value" id="breakValue">5 分钟</span>
+          </div>
+          <input type="range" class="setting-slider" id="breakMinutes" min="1" max="60" value="5">
+          <div class="slider-ticks">
+            <span>1</span><span>15</span><span>30</span><span>45</span><span>60</span>
+          </div>
         </div>
       </div>
       <button class="btn btn-apply" id="btnApplyTime">应用设置</button>

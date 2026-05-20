@@ -569,6 +569,62 @@ body {
   box-shadow: 0 0 0 3px rgba(236, 64, 122, 0.1);
 }
 
+.setting-label-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+.setting-value {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #ec407a;
+  background: rgba(236, 64, 122, 0.08);
+  padding: 2px 10px;
+  border-radius: 10px;
+}
+
+.setting-slider {
+  width: 100%;
+  -webkit-appearance: none;
+  appearance: none;
+  height: 6px;
+  border-radius: 3px;
+  background: linear-gradient(90deg, #bbdefb, #f48fb1);
+  outline: none;
+  cursor: pointer;
+}
+.setting-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #ec407a, #e91e63);
+  cursor: pointer;
+  box-shadow: 0 2px 10px rgba(236, 64, 122, 0.35);
+  border: 2px solid #fff;
+  margin-top: -10px;
+}
+.setting-slider::-moz-range-thumb {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #ec407a, #e91e63);
+  cursor: pointer;
+  box-shadow: 0 2px 10px rgba(236, 64, 122, 0.35);
+  border: 2px solid #fff;
+}
+
+.slider-ticks {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.65rem;
+  color: #90a4ae;
+  margin-top: 4px;
+  padding: 0 2px;
+}
+
 .btn-apply {
   width: 100%;
   padding: 12px;

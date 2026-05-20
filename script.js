@@ -92,8 +92,8 @@ function loadTimeConfig() {
     const raw = localStorage.getItem("pomodoro_conan_time_config");
     if (raw) {
       const cfg = JSON.parse(raw);
-      if (cfg.workMinutes >= 0.1 && cfg.workMinutes <= 120) workMinutes = cfg.workMinutes;
-      if (cfg.breakMinutes >= 0.1 && cfg.breakMinutes <= 60) breakMinutes = cfg.breakMinutes;
+      if (cfg.workMinutes >= 1 && cfg.workMinutes <= 120) workMinutes = cfg.workMinutes;
+      if (cfg.breakMinutes >= 1 && cfg.breakMinutes <= 60) breakMinutes = cfg.breakMinutes;
     }
   } catch (e) { /* 静默处理 */ }
   applyTimeConfig();
@@ -399,13 +399,13 @@ function applyCustomTime() {
   const wm = parseFloat(inputWorkMinutes.value);
   const bm = parseFloat(inputBreakMinutes.value);
 
-  if (isNaN(wm) || wm < 0.1 || wm > 120) {
-    showToast("调查时间请设置在 0.1-120 分钟之间（如 0.5=30秒）");
+  if (isNaN(wm) || wm < 1 || wm > 120) {
+    showToast("调查时间请设置在 1-120 分钟之间");
     inputWorkMinutes.value = workMinutes;
     return;
   }
-  if (isNaN(bm) || bm < 0.1 || bm > 60) {
-    showToast("休息时间请设置在 0.1-60 分钟之间");
+  if (isNaN(bm) || bm < 1 || bm > 60) {
+    showToast("休息时间请设置在 1-60 分钟之间");
     inputBreakMinutes.value = breakMinutes;
     return;
   }
@@ -578,6 +578,12 @@ btnReset.addEventListener("touchcancel", endResetPress);
 btnSkip.addEventListener("click", skipSession);
 btnClearStats.addEventListener("click", clearAllStats);
 btnApplyTime.addEventListener("click", applyCustomTime);
+inputWorkMinutes.addEventListener("input", function () {
+  document.getElementById("workValue").textContent = this.value + " 分钟";
+});
+inputBreakMinutes.addEventListener("input", function () {
+  document.getElementById("breakValue").textContent = this.value + " 分钟";
+});
 
 document.addEventListener("keydown", (e) => {
   if (e.code === "Space" && e.target === document.body) {
