@@ -40,8 +40,9 @@ The user wants: each photo complete and clearly visible, arranged beautifully.
 
 - kenan.jpg: center, ~180px wide, -2° tilt
 - photo2-5: ~140px wide each, staggered around center
-- White 6px border + box-shadow for polaroid card feel
+- Black 6px border + box-shadow for polaroid card feel
 - Slight random rotations for organic scattered look
+- Body: rich deep blue `#0a1628` for gorgeous night-sky backdrop
 
 ### HTML Structure
 

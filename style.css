@@ -39,7 +39,7 @@
 
 body {
   font-family: "Microsoft YaHei", "PingFang SC", "Noto Sans SC", sans-serif;
-  background: #1a1a2e;
+  background: linear-gradient(160deg, #0a1628 0%, #0f2440 40%, #0d1b35 100%);
   color: var(--text-dark);
   min-height: 100vh;
   display: flex;
@@ -53,36 +53,69 @@ body {
   position: relative;
 }
 
-/* ========== 5图碎片玻璃背景（放射裂纹，互不重叠） ========== */
-.bg-grid {
+/* ========== 5图拍立得拼贴背景 ========== */
+.bg-collage {
   position: fixed;
   inset: 0;
   z-index: 0;
   pointer-events: none;
 }
 
-.bg-cell {
+.photo-card {
   position: absolute;
-  inset: -1px;
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
-  filter: drop-shadow(0 0 2px rgba(0, 0, 0, 0.5));
+  padding: 6px;
+  background: #111;
+  border-radius: 3px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5);
 }
 
-/* 5 条放射裂纹，撞击点 (40%, 45%)，碎片互不重叠 */
-.bg-cell-1 { clip-path: polygon(40% 45%, 50% 0, 100% 0, 100% 30%); }
-.bg-cell-2 { clip-path: polygon(40% 45%, 100% 30%, 100% 100%, 85% 100%); }
-.bg-cell-3 { clip-path: polygon(40% 45%, 85% 100%, 15% 100%); }
-.bg-cell-4 { clip-path: polygon(40% 45%, 15% 100%, 0 100%, 0 35%); }
-.bg-cell-5 { clip-path: polygon(40% 45%, 0 35%, 0 0, 50% 0); }
+.photo-card img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.photo-kenan {
+  top: 42%;
+  left: 50%;
+  width: 180px;
+  transform: translate(-50%, -50%) rotate(-2deg);
+}
+
+.photo-2 {
+  top: 22%;
+  left: 12%;
+  width: 135px;
+  transform: rotate(3deg);
+}
+
+.photo-3 {
+  top: 20%;
+  right: 10%;
+  width: 135px;
+  transform: rotate(-4deg);
+}
+
+.photo-4 {
+  bottom: 18%;
+  left: 15%;
+  width: 135px;
+  transform: rotate(4deg);
+}
+
+.photo-5 {
+  bottom: 22%;
+  right: 12%;
+  width: 135px;
+  transform: rotate(-3deg);
+}
 
 .bg-overlay {
   position: fixed;
   inset: 0;
   z-index: 1;
   pointer-events: none;
-  background: rgba(10, 10, 40, 0.45);
+  background: rgba(5, 12, 30, 0.45);
 }
 
 /* 卡片内容区域加深背景保证可读性 */

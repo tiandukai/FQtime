@@ -81,23 +81,6 @@ let currentSession = 1;
 let targetEndTime = null; // 目标结束时间戳，用于后台计时修正
 let silentMode = false;   // 静音模式
 
-// ========== 多图混合背景 ==========
-(function initBgGrid() {
-  var images = [
-    "images/kenan.jpg",
-    "images/photo2.jpg",
-    "images/photo3.jpg",
-    "images/photo4.jpg",
-    "images/photo5.jpg",
-  ];
-  for (var i = 0; i < images.length; i++) {
-    var cell = document.getElementById("bgCell" + (i + 1));
-    if (cell) {
-      cell.style.backgroundImage = "url(" + images[i] + ")";
-    }
-  }
-})();
-
 // ========== 初始化环形进度条 ==========
 ringProgress.style.strokeDasharray = String(RING_CIRCUMFERENCE);
 ringProgress.style.strokeDashoffset = "0";
