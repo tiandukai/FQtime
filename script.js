@@ -49,7 +49,6 @@ const ringGlow = document.getElementById("ringGlow");
 const modeIndicator = document.getElementById("modeIndicator");
 const modeLabel = document.getElementById("modeLabel");
 const sessionHint = document.getElementById("sessionHint");
-const caseNumber = document.getElementById("caseNumber");
 const caseStatus = document.getElementById("caseStatus");
 const btnStart = document.getElementById("btnStart");
 const btnStartText = btnStart.querySelector(".btn-text");
@@ -79,6 +78,25 @@ let remainingSeconds = workSeconds;
 let intervalId = null;
 let isRunning = false;
 let currentSession = 1;
+let targetEndTime = null; // 目标结束时间戳，用于后台计时修正
+let silentMode = false;   // 静音模式
+
+// ========== 多图混合背景 ==========
+(function initBgGrid() {
+  var images = [
+    "images/kenan.jpg",
+    "images/photo2.jpg",
+    "images/photo3.jpg",
+    "images/photo4.jpg",
+    "images/photo5.jpg",
+  ];
+  for (var i = 0; i < images.length; i++) {
+    var cell = document.getElementById("bgCell" + (i + 1));
+    if (cell) {
+      cell.style.backgroundImage = "url(" + images[i] + ")";
+    }
+  }
+})();
 
 // ========== 初始化环形进度条 ==========
 ringProgress.style.strokeDasharray = String(RING_CIRCUMFERENCE);
@@ -285,7 +303,6 @@ function updateModeUI() {
     document.getElementById("glassesReflection").classList.add("active");
   }
 
-  caseNumber.textContent = `Case #${String(currentSession).padStart(3, "0")}`;
   sessionHint.textContent = `第 ${currentSession} 轮`;
   updateTimerDisplay();
   updateRingProgress();
@@ -417,7 +434,7 @@ function applyCustomTime() {
   applyTimeConfig();
   saveTimeConfig();
   showToast("时间设置已更新！加油！");
-  playClickSound();
+  if (!silentMode) playClickSound();
   updateDocumentTitle();
 }
 
@@ -425,11 +442,14 @@ function applyCustomTime() {
 function startTimer() {
   if (isRunning) return;
   isRunning = true;
+  targetEndTime = Date.now() + remainingSeconds * 1000;
   updateButtonUI();
-  playClickSound();
+  if (!silentMode) playClickSound();
 
   intervalId = setInterval(() => {
-    remainingSeconds -= 1;
+    const now = Date.now();
+    const elapsed = Math.max(0, Math.round((targetEndTime - now) / 1000));
+    remainingSeconds = elapsed;
     updateTimerDisplay();
     updateRingProgress();
     updateDocumentTitle();
@@ -437,7 +457,7 @@ function startTimer() {
     if (remainingSeconds <= 0) {
       completeSession();
     }
-  }, 1000);
+  }, 200); // 200ms 刷新保证精度，同时避免后台累积
 }
 
 function pauseTimer() {
@@ -445,6 +465,8 @@ function pauseTimer() {
   isRunning = false;
   clearInterval(intervalId);
   intervalId = null;
+  // 停止时保存剩余时间
+  remainingSeconds = Math.max(0, Math.round((targetEndTime - Date.now()) / 1000));
   updateButtonUI();
   timerSeparatorEl.classList.add("paused");
 }
@@ -453,23 +475,29 @@ function resetTimer() {
   const wasRunning = isRunning;
   pauseTimer();
   remainingSeconds = mode === MODE_WORK ? workSeconds : breakSeconds;
+  targetEndTime = null;
   updateTimerDisplay();
   updateRingProgress();
   timerSeparatorEl.classList.add("paused");
   updateDocumentTitle();
-  if (wasRunning) playClickSound();
+  if (wasRunning && !silentMode) playClickSound();
 }
 
 function skipSession() {
   pauseTimer();
-  playClickSound();
+  if (!silentMode) playClickSound();
   remainingSeconds = 0;
   completeSession();
 }
 
 function completeSession() {
   pauseTimer();
-  playCompleteSound();
+  targetEndTime = null;
+  if (!silentMode) playCompleteSound();
+  // 设备振动
+  if (!silentMode && navigator.vibrate) {
+    navigator.vibrate([200, 100, 200, 100, 400]);
+  }
 
   if (mode === MODE_WORK) {
     recordCompletedPomodoro();
@@ -507,7 +535,7 @@ function showGoalAnimation() {
   const stats = loadStats();
   countEl.textContent = "+" + stats.totalCount;
   overlay.classList.add("show");
-  playClickSound();
+  if (!silentMode) playClickSound();
   clearTimeout(goalTimer);
   goalTimer = setTimeout(() => {
     overlay.classList.remove("show");
@@ -531,6 +559,28 @@ function toggleTimer() {
   }
 }
 
+// ========== 静音模式 ==========
+function toggleSilentMode() {
+  silentMode = !silentMode;
+  try { localStorage.setItem("pomodoro_conan_silent", silentMode ? "1" : "0"); } catch (e) {}
+  updateSilentUI();
+}
+
+function updateSilentUI() {
+  const btn = document.getElementById("btnSilent");
+  if (btn) {
+    btn.textContent = silentMode ? "🔇" : "🔊";
+    btn.classList.toggle("silent", silentMode);
+  }
+}
+
+function loadSilentMode() {
+  try {
+    silentMode = localStorage.getItem("pomodoro_conan_silent") === "1";
+  } catch (e) { /* default false */ }
+  updateSilentUI();
+}
+
 function updateDocumentTitle() {
   const mins = Math.floor(remainingSeconds / 60);
   const secs = remainingSeconds % 60;
@@ -552,8 +602,8 @@ function startResetPress(e) {
   resetPressTimer = setTimeout(() => {
     btnReset.classList.remove("long-pressing");
     resetTimer();
-    if (navigator.vibrate) navigator.vibrate(50);
-    playClickSound();
+    if (!silentMode && navigator.vibrate) navigator.vibrate(50);
+    if (!silentMode) playClickSound();
     resetPressTimer = null;
   }, 1000);
 }
@@ -592,8 +642,24 @@ document.addEventListener("keydown", (e) => {
   }
 });
 
+document.getElementById("btnSilent").addEventListener("click", toggleSilentMode);
+
 document.addEventListener("visibilitychange", () => {
   if (!document.hidden) {
+    // 从后台恢复：根据目标时间戳补算实际剩余时间
+    if (isRunning && targetEndTime) {
+      const now = Date.now();
+      const corrected = Math.max(0, Math.round((targetEndTime - now) / 1000));
+      if (corrected <= 0) {
+        // 计时已到期，直接触发完成
+        remainingSeconds = 0;
+        updateTimerDisplay();
+        updateRingProgress();
+        completeSession();
+        return;
+      }
+      remainingSeconds = corrected;
+    }
     updateTimerDisplay();
     updateRingProgress();
     updateModeUI();
@@ -701,7 +767,7 @@ document.getElementById("btnTaskAdd").addEventListener("click", () => {
   if (name.length > 30) { showToast("案件名称不超过 30 字"); return; }
   addCustomTask(name);
   input.value = "";
-  playClickSound();
+  if (!silentMode) playClickSound();
 });
 
 document.getElementById("taskAddInput").addEventListener("keydown", (e) => {
@@ -713,6 +779,7 @@ document.getElementById("taskAddInput").addEventListener("keydown", (e) => {
 // ========== 初始化 ==========
 function init() {
   loadTimeConfig();
+  loadSilentMode();
   requestNotificationPermission();
   updateModeUI();
   updateButtonUI();

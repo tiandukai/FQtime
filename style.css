@@ -1,6 +1,6 @@
 /* ============================================
    番茄钟 —— 柯南&小兰 可爱主题
-   淡蓝 + 淡粉 配色
+   蓝色计时 + 琥珀休息 配色
    ============================================ */
 
 :root {
@@ -9,11 +9,17 @@
   --blue-mid: #90caf6;
   --blue-accent: #64b5f6;
   --blue-solid: #42a5f5;
+  --blue-deep: #1e88e5;
   --pink-light: #fce4ec;
   --pink-soft: #f8bbd0;
-  --pink-mid: #f48fb1;
-  --pink-accent: #ec407a;
-  --pink-solid: #e91e63;
+  --pink-mid: #90caf6;
+  --pink-accent: #42a5f5;
+  --pink-solid: #1e88e5;
+  --amber-light: #fff8e1;
+  --amber-soft: #ffecb3;
+  --amber-mid: #ffcc80;
+  --amber-accent: #ff9800;
+  --amber-solid: #f57c00;
   --white: #ffffff;
   --white-soft: #fafafa;
   --text-dark: #37474f;
@@ -21,8 +27,8 @@
   --text-light: #90a4ae;
   --shadow-soft: 0 4px 20px rgba(0, 0, 0, 0.08);
   --shadow-card: 0 8px 32px rgba(0, 0, 0, 0.1);
-  --shadow-pink: 0 4px 16px rgba(236, 64, 122, 0.2);
-  --shadow-blue: 0 4px 16px rgba(66, 165, 245, 0.2);
+  --shadow-blue: 0 4px 16px rgba(66, 165, 245, 0.3);
+  --shadow-amber: 0 4px 16px rgba(255, 152, 0, 0.2);
   --radius-sm: 12px;
   --radius: 18px;
   --radius-lg: 24px;
@@ -33,7 +39,7 @@
 
 body {
   font-family: "Microsoft YaHei", "PingFang SC", "Noto Sans SC", sans-serif;
-  background: linear-gradient(135deg, #e3f2fd 0%, #fce4ec 30%, #e8eaf6 50%, #fce4ec 70%, #e3f2fd 100%);
+  background: #1a1a2e;
   color: var(--text-dark);
   min-height: 100vh;
   display: flex;
@@ -47,33 +53,46 @@ body {
   position: relative;
 }
 
-/* ========== 背景合照 ========== */
-.bg-photo {
+/* ========== 5图碎片玻璃背景（放射裂纹，互不重叠） ========== */
+.bg-grid {
   position: fixed;
   inset: 0;
   z-index: 0;
   pointer-events: none;
-  background-image: url('images/kenan.jpg');
-  background-size: cover;
-  background-position: center 30%;
-  background-repeat: no-repeat;
-  filter: brightness(1.05) saturate(1.1);
-  transform: scale(1.05);
 }
+
+.bg-cell {
+  position: absolute;
+  inset: -1px;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  filter: drop-shadow(0 0 2px rgba(0, 0, 0, 0.5));
+}
+
+/* 5 条放射裂纹，撞击点 (40%, 45%)，碎片互不重叠 */
+.bg-cell-1 { clip-path: polygon(40% 45%, 50% 0, 100% 0, 100% 30%); }
+.bg-cell-2 { clip-path: polygon(40% 45%, 100% 30%, 100% 100%, 85% 100%); }
+.bg-cell-3 { clip-path: polygon(40% 45%, 85% 100%, 15% 100%); }
+.bg-cell-4 { clip-path: polygon(40% 45%, 15% 100%, 0 100%, 0 35%); }
+.bg-cell-5 { clip-path: polygon(40% 45%, 0 35%, 0 0, 50% 0); }
 
 .bg-overlay {
   position: fixed;
   inset: 0;
   z-index: 1;
-  background: linear-gradient(
-    135deg,
-    rgba(227, 242, 253, 0.75) 0%,
-    rgba(252, 228, 236, 0.7) 30%,
-    rgba(232, 234, 246, 0.7) 50%,
-    rgba(252, 228, 236, 0.7) 70%,
-    rgba(227, 242, 253, 0.75) 100%
-  );
   pointer-events: none;
+  background: rgba(10, 10, 40, 0.45);
+}
+
+/* 卡片内容区域加深背景保证可读性 */
+.case-file-card,
+.settings-section,
+.stats-section,
+.task-section,
+.encourage-box {
+  background: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(12px);
 }
 
 /* ========== 可爱浮动装饰 ========== */
@@ -81,7 +100,7 @@ body {
   position: fixed;
   inset: 0;
   pointer-events: none;
-  z-index: 2;
+  z-index: 7;
   overflow: hidden;
 }
 .cute-float {
@@ -108,7 +127,7 @@ body {
 
 .container {
   position: relative;
-  z-index: 3;
+  z-index: 10;
   width: 100%;
   max-width: 500px;
   display: flex;
@@ -228,7 +247,7 @@ body {
 .encourage-text {
   font-size: 0.95rem;
   font-weight: 600;
-  color: #e91e63;
+  color: #1e88e5;
   letter-spacing: 1px;
   line-height: 1.4;
 }
@@ -283,14 +302,14 @@ body {
 }
 .case-status.work-status {
   background: rgba(236, 64, 122, 0.1);
-  color: #e91e63;
+  color: #1e88e5;
   border: 1px solid rgba(236, 64, 122, 0.25);
   animation: status-pulse 2.5s ease-in-out infinite;
 }
 .case-status.break-status {
-  background: rgba(66, 165, 245, 0.1);
-  color: #42a5f5;
-  border: 1px solid rgba(66, 165, 245, 0.25);
+  background: rgba(255, 152, 0, 0.1);
+  color: #f57c00;
+  border: 1px solid rgba(255, 152, 0, 0.25);
 }
 
 @keyframes status-pulse {
@@ -332,13 +351,13 @@ body {
 }
 
 .ring-progress.work-mode {
-  stroke: #ec407a;
+  stroke: #42a5f5;
   filter: drop-shadow(0 0 10px rgba(236, 64, 122, 0.5));
 }
 
 .ring-progress.break-mode {
-  stroke: #42a5f5;
-  filter: drop-shadow(0 0 10px rgba(66, 165, 245, 0.5));
+  stroke: #ff9800;
+  filter: drop-shadow(0 0 10px rgba(255, 152, 0, 0.5));
 }
 
 .ring-glow {
@@ -349,7 +368,7 @@ body {
 }
 
 .ring-glow.active {
-  stroke: #f48fb1;
+  stroke: #90caf6;
   opacity: 0.12;
   animation: pulse-glow 2.5s ease-in-out infinite;
 }
@@ -360,7 +379,7 @@ body {
 }
 
 .ring-bowtie-dot {
-  fill: #e91e63;
+  fill: #1e88e5;
   filter: drop-shadow(0 0 6px rgba(233, 30, 99, 0.6));
 }
 
@@ -387,7 +406,7 @@ body {
 .timer-separator {
   font-size: 2.8rem;
   font-weight: 700;
-  color: #ec407a;
+  color: #42a5f5;
   animation: blink-sep 1s steps(1) infinite;
 }
 
@@ -423,17 +442,17 @@ body {
   box-shadow: 0 0 14px rgba(236, 64, 122, 0.1);
 }
 .mode-indicator.break {
-  border-color: rgba(66, 165, 245, 0.3);
-  box-shadow: 0 0 14px rgba(66, 165, 245, 0.1);
+  border-color: rgba(255, 152, 0, 0.3);
+  box-shadow: 0 0 14px rgba(255, 152, 0, 0.1);
 }
 
 .mode-dot {
   width: 8px; height: 8px;
   border-radius: 50%;
-  background: #ec407a;
+  background: #42a5f5;
   animation: dot-pulse 1.5s ease-in-out infinite;
 }
-.mode-indicator.break .mode-dot { background: #42a5f5; }
+.mode-indicator.break .mode-dot { background: #ff9800; }
 
 @keyframes dot-pulse {
   0%, 100% { opacity: 1; box-shadow: 0 0 4px currentColor; }
@@ -470,7 +489,7 @@ body {
 
 .btn-primary {
   padding: 14px 32px;
-  background: linear-gradient(135deg, #ec407a, #e91e63);
+  background: linear-gradient(135deg, #42a5f5, #1e88e5);
   color: #fff;
   border-radius: 28px;
   font-size: 0.95rem;
@@ -485,11 +504,11 @@ body {
 .btn-primary:active { transform: scale(0.95) translateY(0); }
 
 .btn-primary.paused-state {
-  background: linear-gradient(135deg, #42a5f5, #1e88e5);
-  box-shadow: 0 4px 20px rgba(30, 136, 229, 0.3);
+  background: linear-gradient(135deg, #ff9800, #f57c00);
+  box-shadow: 0 4px 20px rgba(255, 152, 0, 0.3);
 }
 .btn-primary.paused-state:hover {
-  box-shadow: 0 6px 28px rgba(66, 165, 245, 0.45);
+  box-shadow: 0 6px 28px rgba(255, 152, 0, 0.45);
 }
 
 .btn-icon-only {
@@ -502,8 +521,13 @@ body {
 }
 .btn-icon-only:hover {
   background: #fff;
-  color: #ec407a;
+  color: #42a5f5;
   border-color: rgba(236, 64, 122, 0.25);
+}
+
+.silent-btn.silent {
+  color: #999;
+  border-color: rgba(0, 0, 0, 0.08);
 }
 
 /* ========== 时间自定义设置 ========== */
@@ -565,7 +589,7 @@ body {
 }
 
 .setting-input:focus {
-  border-color: #ec407a;
+  border-color: #42a5f5;
   box-shadow: 0 0 0 3px rgba(236, 64, 122, 0.1);
 }
 
@@ -578,7 +602,7 @@ body {
 .setting-value {
   font-size: 0.9rem;
   font-weight: 700;
-  color: #ec407a;
+  color: #42a5f5;
   background: rgba(236, 64, 122, 0.08);
   padding: 2px 10px;
   border-radius: 10px;
@@ -590,7 +614,7 @@ body {
   appearance: none;
   height: 6px;
   border-radius: 3px;
-  background: linear-gradient(90deg, #bbdefb, #f48fb1);
+  background: linear-gradient(90deg, #bbdefb, #90caf6);
   outline: none;
   cursor: pointer;
 }
@@ -600,7 +624,7 @@ body {
   width: 26px;
   height: 26px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #ec407a, #e91e63);
+  background: linear-gradient(135deg, #42a5f5, #1e88e5);
   cursor: pointer;
   box-shadow: 0 2px 10px rgba(236, 64, 122, 0.35);
   border: 2px solid #fff;
@@ -610,7 +634,7 @@ body {
   width: 26px;
   height: 26px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #ec407a, #e91e63);
+  background: linear-gradient(135deg, #42a5f5, #1e88e5);
   cursor: pointer;
   box-shadow: 0 2px 10px rgba(236, 64, 122, 0.35);
   border: 2px solid #fff;
@@ -700,7 +724,7 @@ body {
   display: block;
   font-size: 1.6rem;
   font-weight: 700;
-  color: #ec407a;
+  color: #42a5f5;
   font-variant-numeric: tabular-nums;
 }
 
@@ -731,7 +755,7 @@ body {
 }
 .goal-fill {
   height: 100%;
-  background: linear-gradient(90deg, #f48fb1, #ec407a);
+  background: linear-gradient(90deg, #90caf6, #42a5f5);
   border-radius: 3px;
   transition: width 0.6s ease;
   box-shadow: 0 0 8px rgba(236, 64, 122, 0.3);
@@ -750,7 +774,7 @@ body {
   transition: color var(--transition);
   letter-spacing: 1px;
 }
-.btn-text:hover { color: #ec407a; }
+.btn-text:hover { color: #42a5f5; }
 
 /* ========== 任务列表 ========== */
 .task-section {
@@ -780,7 +804,7 @@ body {
 .task-progress {
   font-size: 0.78rem;
   font-weight: 600;
-  color: #e91e63;
+  color: #1e88e5;
   background: rgba(236, 64, 122, 0.1);
   padding: 4px 12px;
   border-radius: 12px;
@@ -845,7 +869,7 @@ body {
 }
 .task-card-status.in-progress {
   background: rgba(236, 64, 122, 0.1);
-  color: #e91e63;
+  color: #1e88e5;
 }
 .task-card-status.done {
   background: rgba(76, 175, 80, 0.1);
@@ -867,7 +891,7 @@ body {
 }
 .task-card:hover .task-card-delete:hover {
   opacity: 1;
-  color: #e91e63;
+  color: #1e88e5;
 }
 
 .task-add-row {
@@ -888,7 +912,7 @@ body {
   letter-spacing: 0.5px;
 }
 .task-add-input:focus {
-  border-color: #ec407a;
+  border-color: #42a5f5;
   border-style: solid;
   box-shadow: 0 0 0 3px rgba(236, 64, 122, 0.08);
 }
@@ -897,7 +921,7 @@ body {
 }
 .btn-task-add {
   padding: 10px 18px;
-  background: linear-gradient(135deg, #f48fb1, #ec407a);
+  background: linear-gradient(135deg, #90caf6, #42a5f5);
   color: #fff;
   border: none;
   border-radius: var(--radius-sm);
@@ -1027,7 +1051,7 @@ body {
   transform: translate(-50%, -50%);
   font-size: 32px;
   font-weight: 900;
-  color: #e91e63;
+  color: #1e88e5;
   text-shadow: 0 2px 12px rgba(233, 30, 99, 0.5);
   z-index: 3;
   animation: count-pop 0.8s ease-out 0.3s both;
@@ -1065,7 +1089,7 @@ body {
 
 .goal-sub {
   font-size: 0.85rem;
-  color: #e91e63;
+  color: #1e88e5;
   letter-spacing: 2px;
   margin: 4px 0 0;
   font-weight: 600;
@@ -1075,7 +1099,7 @@ body {
 .glasses-reflection {
   position: fixed;
   inset: 0;
-  z-index: 4;
+  z-index: 8;
   pointer-events: none;
   opacity: 0;
   transition: opacity 0.8s ease;
