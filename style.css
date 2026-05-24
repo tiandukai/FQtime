@@ -83,9 +83,9 @@ body {
 }
 
 .photo-2 {
-  top: 8%;
-  left: 6%;
-  width: 150px;
+  top: 6%;
+  left: 4%;
+  width: 300px;
   transform: rotate(3deg);
 }
 
@@ -97,9 +97,9 @@ body {
 }
 
 .photo-4 {
-  bottom: 28%;
+  bottom: 22%;
   left: 4%;
-  width: 150px;
+  width: 300px;
   transform: rotate(4deg);
 }
 
