@@ -8,8 +8,8 @@
   "use strict";
 
   // ========== 常量配置 ==========
-  const DEFAULT_WORK_MINUTES = 45;
-const DEFAULT_BREAK_MINUTES = 5;
+  const DEFAULT_WORK_SEC = 2700;
+const DEFAULT_BREAK_SEC = 300;
 const DAILY_GOAL = 8;
 const RING_RADIUS = 86;
 const RING_CIRCUMFERENCE = 2 * Math.PI * RING_RADIUS;
@@ -57,8 +57,8 @@ const btnReset = document.getElementById("btnReset");
 const btnSkip = document.getElementById("btnSkip");
 const btnClearStats = document.getElementById("btnClearStats");
 const btnApplyTime = document.getElementById("btnApplyTime");
-const inputWorkMinutes = document.getElementById("workMinutes");
-const inputBreakMinutes = document.getElementById("breakMinutes");
+const inputWorkSec = document.getElementById("workSec");
+const inputBreakSec = document.getElementById("breakSec");
 const encourageText = document.getElementById("encourageText");
 
 const statToday = document.getElementById("statToday");
@@ -70,11 +70,9 @@ const goalLabel = document.getElementById("goalLabel");
 
 // ========== 状态 ==========
 let mode = MODE_WORK;
-let workMinutes = DEFAULT_WORK_MINUTES;
-let breakMinutes = DEFAULT_BREAK_MINUTES;
-let workSeconds = workMinutes * 60;
-let breakSeconds = breakMinutes * 60;
-let remainingSeconds = workSeconds;
+let totalWorkSec = DEFAULT_WORK_SEC;
+let totalBreakSec = DEFAULT_BREAK_SEC;
+let remainingSeconds = totalWorkSec;
 let intervalId = null;
 let isRunning = false;
 let currentSession = 1;
@@ -90,11 +88,11 @@ ringGlow.classList.add("active");
 // ========== 时间配置持久化 ==========
 function loadTimeConfig() {
   try {
-    const raw = localStorage.getItem("pomodoro_conan_time_config");
+    const raw = localStorage.getItem("pomodoro_conan_time_config_v2");
     if (raw) {
       const cfg = JSON.parse(raw);
-      if (cfg.workMinutes >= 1 && cfg.workMinutes <= 120) workMinutes = cfg.workMinutes;
-      if (cfg.breakMinutes >= 1 && cfg.breakMinutes <= 60) breakMinutes = cfg.breakMinutes;
+      if (cfg.workSec >= 5 && cfg.workSec <= 7200) totalWorkSec = cfg.workSec;
+      if (cfg.breakSec >= 5 && cfg.breakSec <= 3600) totalBreakSec = cfg.breakSec;
     }
   } catch (e) { /* 静默处理 */ }
   applyTimeConfig();
@@ -102,19 +100,17 @@ function loadTimeConfig() {
 
 function saveTimeConfig() {
   try {
-    localStorage.setItem("pomodoro_conan_time_config", JSON.stringify({
-      workMinutes,
-      breakMinutes,
+    localStorage.setItem("pomodoro_conan_time_config_v2", JSON.stringify({
+      workSec: totalWorkSec,
+      breakSec: totalBreakSec,
     }));
   } catch (e) { /* 静默处理 */ }
 }
 
 function applyTimeConfig() {
-  workSeconds = Math.round(workMinutes * 60);
-  breakSeconds = Math.round(breakMinutes * 60);
-  remainingSeconds = mode === MODE_WORK ? workSeconds : breakSeconds;
-  inputWorkMinutes.value = workMinutes;
-  inputBreakMinutes.value = breakMinutes;
+  remainingSeconds = mode === MODE_WORK ? totalWorkSec : totalBreakSec;
+  inputWorkSec.value = totalWorkSec;
+  inputBreakSec.value = totalBreakSec;
   updateTimerDisplay();
   updateRingProgress();
   timerSeparatorEl.classList.add("paused");
@@ -259,7 +255,7 @@ function updateTimerDisplay() {
 }
 
 function updateRingProgress() {
-  const total = mode === MODE_WORK ? workSeconds : breakSeconds;
+  const total = mode === MODE_WORK ? totalWorkSec : totalBreakSec;
   const progress = (total - remainingSeconds) / total;
   const offset = RING_CIRCUMFERENCE * progress;
   ringProgress.style.strokeDashoffset = String(offset);
@@ -367,7 +363,7 @@ function recordCompletedPomodoro() {
 
   stats.todayCount += 1;
   stats.totalCount += 1;
-  stats.todayFocusMinutes += workMinutes;
+  stats.todayFocusMinutes += Math.round(totalWorkSec / 60);
   stats.lastActiveDate = today;
   stats.todayDate = today;
 
@@ -399,25 +395,33 @@ function clearAllStats() {
 }
 
 // ========== 自定义时间 ==========
-function applyCustomTime() {
-  const wm = parseFloat(inputWorkMinutes.value);
-  const bm = parseFloat(inputBreakMinutes.value);
+function formatSeconds(totalSec) {
+  if (totalSec < 60) return totalSec + " 秒";
+  var m = Math.floor(totalSec / 60);
+  var s = totalSec % 60;
+  if (s === 0) return m + " 分钟";
+  return m + "分" + s + "秒";
+}
 
-  if (isNaN(wm) || wm < 1 || wm > 120) {
-    showToast("调查时间请设置在 1-120 分钟之间");
-    inputWorkMinutes.value = workMinutes;
+function applyCustomTime() {
+  const ws = parseInt(inputWorkSec.value, 10);
+  const bs = parseInt(inputBreakSec.value, 10);
+
+  if (isNaN(ws) || ws < 5 || ws > 7200) {
+    showToast("调查时间请设置在 5秒-120分钟 之间");
+    inputWorkSec.value = totalWorkSec;
     return;
   }
-  if (isNaN(bm) || bm < 1 || bm > 60) {
-    showToast("休息时间请设置在 1-60 分钟之间");
-    inputBreakMinutes.value = breakMinutes;
+  if (isNaN(bs) || bs < 5 || bs > 3600) {
+    showToast("休息时间请设置在 5秒-60分钟 之间");
+    inputBreakSec.value = totalBreakSec;
     return;
   }
 
   const wasRunning = isRunning;
   pauseTimer();
-  workMinutes = wm;
-  breakMinutes = bm;
+  totalWorkSec = ws;
+  totalBreakSec = bs;
   applyTimeConfig();
   saveTimeConfig();
   showToast("时间设置已更新！加油！");
@@ -461,7 +465,7 @@ function pauseTimer() {
 function resetTimer() {
   const wasRunning = isRunning;
   pauseTimer();
-  remainingSeconds = mode === MODE_WORK ? workSeconds : breakSeconds;
+  remainingSeconds = mode === MODE_WORK ? totalWorkSec : totalBreakSec;
   targetEndTime = null;
   updateTimerDisplay();
   updateRingProgress();
@@ -496,7 +500,7 @@ function completeSession() {
       `第 ${currentSession} 轮推理完成！"真相只有一个"——休息一下吧。`
     );
     mode = MODE_BREAK;
-    remainingSeconds = breakSeconds;
+    remainingSeconds = totalBreakSec;
   } else {
     currentSession += 1;
     showRandomEncourage();
@@ -505,7 +509,7 @@ function completeSession() {
       `休息结束！第 ${currentSession} 轮调查开始！`
     );
     mode = MODE_WORK;
-    remainingSeconds = workSeconds;
+    remainingSeconds = totalWorkSec;
   }
 
   updateModeUI();
@@ -615,11 +619,11 @@ btnReset.addEventListener("touchcancel", endResetPress);
 btnSkip.addEventListener("click", skipSession);
 btnClearStats.addEventListener("click", clearAllStats);
 btnApplyTime.addEventListener("click", applyCustomTime);
-inputWorkMinutes.addEventListener("input", function () {
-  document.getElementById("workValue").textContent = this.value + " 分钟";
+inputWorkSec.addEventListener("input", function () {
+  document.getElementById("workValue").textContent = formatSeconds(parseInt(this.value, 10));
 });
-inputBreakMinutes.addEventListener("input", function () {
-  document.getElementById("breakValue").textContent = this.value + " 分钟";
+inputBreakSec.addEventListener("input", function () {
+  document.getElementById("breakValue").textContent = formatSeconds(parseInt(this.value, 10));
 });
 
 document.addEventListener("keydown", (e) => {
