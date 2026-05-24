@@ -8,14 +8,17 @@ Detective Conan (名侦探柯南) themed Pomodoro timer — a vanilla single-pag
 
 ## Development
 
-There is no build step, no package manager, and no dev server. Open `index.html` directly in a browser to develop. The dev version loads separate `style.css` and `script.js` files.
+There is no build step, no package manager, and no dev server.
 
-**Deployment**: `index_merged.html` is the self-contained deployment artifact — it inlines all CSS and JS into a single HTML file. After editing `script.js` or `style.css`, regenerate it by copying the content of each file into the corresponding `<style>` and `<script>` blocks in the merged HTML.
+- **`dev.html`** — 开发入口，加载外部 `style.css` 和 `script.js`，日常开发时编辑 CSS/JS 后用此文件预览。
+- **`index.html`** — 部署文件，CSS/JS 全部内联（含 base64 图片），直接用于 GitHub Pages。
 
 ```bash
-# After making changes, re-create the merged file by pasting:
-# - style.css contents into the <style> block of index_merged.html
-# - script.js contents (without the IIFE wrapper if already wrapped) into the <script> block of index_merged.html
+# 开发流程：
+# 1. 编辑 style.css / script.js
+# 2. 在浏览器打开 dev.html 测试
+# 3. 测试通过后，将 style.css 内容同步到 index.html 的 <style> 块中，
+#    将 script.js 内容同步到 index.html 的 <script> 块中（去掉 IIFE 外层包装）
 ```
 
 ## Architecture
@@ -31,15 +34,16 @@ There is no build step, no package manager, and no dev server. Open `index.html`
 - **Encouragement messages**: 20-message array, rotates every 15 seconds via `setInterval`
 - **Audio system**: Web Audio API `AudioContext` with triangle/sine oscillators for click and completion sounds
 - **Notification system**: Browser Notification API + custom toast DOM element
+- **Silent mode**: `toggleSilentMode()` / `loadSilentMode()` — 静音开关，关闭所有音频和振动，状态持久化到 `pomodoro_conan_silent`
 - **UI updates**: `updateTimerDisplay()`, `updateRingProgress()`, `updateModeUI()`, `updateButtonUI()` — drives the SVG ring stroke-dashoffset and document title
 - **Stats system** (`STORAGE_KEY = "pomodoro_conan_stats_v3"`): daily/total counts, streak days, focus minutes. Resets daily counts on new day.
-- **Timer core**: `startTimer()` / `pauseTimer()` / `resetTimer()` / `completeSession()` — 1-second `setInterval`, toggles work/break modes on completion
+- **Timer core**: `startTimer()` / `pauseTimer()` / `resetTimer()` / `completeSession()` — 基于时间戳的计时方案：`targetEndTime = Date.now() + remainingSeconds * 1000`，每 200ms 刷新，从后台恢复时根据实际经过时间补算剩余秒数
 - **Task list system** (`TASK_STORAGE_KEY = "pomodoro_conan_tasks_v1"`): Custom tasks only (no presets), persisted per-day in localStorage. `autoCompleteOneTask()` fires on each completed pomodoro.
 - **Soccer goal animation**: Overlay popup with ball-shoot keyframes, auto-hides after 1.8s
 - **Glasses reflection**: Screen-edge blue glow + floating text "真相只有一个，该休息了" — shown during break mode via `updateModeUI()`
 - **Long-press reset**: 1-second hold on reset button with animated fill indicator, `pointerdown`/`pointerup` events plus touch event aliases
 - **Keyboard**: Spacebar toggles timer (only when body is focused)
-- **Visibility change**: On tab refocus, refreshes all UI and stats
+- **Visibility change**: 从后台恢复时根据 `targetEndTime` 计算实际剩余时间；若已超时则直接触发完成
 
 **localStorage keys** (all prefixed `pomodoro_conan_`):
 | Key | Purpose |
@@ -47,6 +51,7 @@ There is no build step, no package manager, and no dev server. Open `index.html`
 | `pomodoro_conan_time_config` | `{ workMinutes, breakMinutes }` |
 | `pomodoro_conan_stats_v3` | `{ todayDate, todayCount, totalCount, todayFocusMinutes, streakDays, lastActiveDate }` |
 | `pomodoro_conan_tasks_v1` | `{ date, tasks[] }` — tasks reset when date changes |
+| `pomodoro_conan_silent` | `"1"` or `"0"` — 静音模式开关 |
 
 ## Remotes
 
@@ -56,3 +61,9 @@ There is no build step, no package manager, and no dev server. Open `index.html`
 ## Images
 
 `images/kenan.jpg` — the Conan & Ran couple photo used as both background (via CSS `background-image`) and header avatar (via `<img>` tag). Must exist for the app to display correctly on mobile. CSS fallback shows 🔍 emoji if image fails to load.
+
+## 已完成功能
+
+1. **后台计时** — 基于时间戳的计时方案，切后台回来后自动补算时间，计时到达时触发通知和振动
+2. **通知增强** — 完成时浏览器原生通知 + 设备振动（iOS 16.4+），支持静音开关切换
+3. **备忘录/任务系统** — 每日自动重置，支持添加/删除/自动完成任务
