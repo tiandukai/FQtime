@@ -78,35 +78,35 @@ body {
 .photo-kenan {
   top: 42%;
   left: 50%;
-  width: 180px;
+  width: 230px;
   transform: translate(-50%, -50%) rotate(-2deg);
 }
 
 .photo-2 {
-  top: 22%;
-  left: 12%;
-  width: 135px;
+  top: 20%;
+  left: 8%;
+  width: 165px;
   transform: rotate(3deg);
 }
 
 .photo-3 {
-  top: 20%;
-  right: 10%;
-  width: 135px;
+  top: 18%;
+  right: 8%;
+  width: 165px;
   transform: rotate(-4deg);
 }
 
 .photo-4 {
-  bottom: 18%;
+  bottom: 16%;
   left: 15%;
-  width: 135px;
+  width: 165px;
   transform: rotate(4deg);
 }
 
 .photo-5 {
-  bottom: 22%;
+  bottom: 20%;
   right: 12%;
-  width: 135px;
+  width: 165px;
   transform: rotate(-3deg);
 }
 
