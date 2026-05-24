@@ -90,9 +90,9 @@ body {
 }
 
 .photo-3 {
-  top: 18%;
-  right: 8%;
-  width: 165px;
+  top: 12%;
+  right: 4%;
+  width: 330px;
   transform: rotate(-4deg);
 }
 
@@ -104,9 +104,9 @@ body {
 }
 
 .photo-5 {
-  bottom: 20%;
-  right: 12%;
-  width: 165px;
+  bottom: 16%;
+  right: 4%;
+  width: 330px;
   transform: rotate(-3deg);
 }
 
