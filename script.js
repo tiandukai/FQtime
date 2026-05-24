@@ -142,6 +142,10 @@ function getAudioContext() {
   if (!audioCtx) {
     audioCtx = new (window.AudioContext || window.webkitAudioContext)();
   }
+  // iOS Safari 挂起 AudioContext，需要 resume
+  if (audioCtx.state === "suspended") {
+    audioCtx.resume();
+  }
   return audioCtx;
 }
 
@@ -763,7 +767,6 @@ document.getElementById("taskAddInput").addEventListener("keydown", (e) => {
 function init() {
   loadTimeConfig();
   loadSilentMode();
-  requestNotificationPermission();
   updateModeUI();
   updateButtonUI();
   refreshStatsForToday();
