@@ -1640,6 +1640,8 @@ let isRunning = false;
 let currentSession = 1;
 let targetEndTime = null; // 目标结束时间戳，用于后台计时修正
 let silentMode = false;   // 静音模式
+let wakeLock = null;      // 屏幕唤醒锁
+let keepAliveNode = null; // 静默音频保持后台活跃
 
 // ========== 初始化环形进度条 ==========
 ringProgress.style.strokeDasharray = String(RING_CIRCUMFERENCE);
@@ -1764,6 +1766,54 @@ function playClickSound() {
     osc.start(ctx.currentTime);
     osc.stop(ctx.currentTime + 0.06);
   } catch (e) { /* 静默处理 */ }
+}
+
+// ========== 后台保活系统（Wake Lock + 静默音频） ==========
+async function requestWakeLock() {
+  if (silentMode) return;
+  try {
+    if ("wakeLock" in navigator && !wakeLock) {
+      wakeLock = await navigator.wakeLock.request("screen");
+      wakeLock.addEventListener("release", () => { wakeLock = null; });
+    }
+  } catch (e) { /* 不支持或被拒绝 */ }
+}
+
+async function releaseWakeLock() {
+  if (wakeLock) {
+    try { await wakeLock.release(); } catch (e) {}
+    wakeLock = null;
+  }
+}
+
+// 静默音频保活：iOS Safari 后台时保持 JS 运行
+function startKeepAlive() {
+  if (silentMode) return;
+  try {
+    const ctx = getAudioContext();
+    if (!keepAliveNode) {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = "sine";
+      osc.frequency.value = 1; // 1Hz，人耳听不到
+      gain.gain.value = 0.001; // 近乎静音
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start();
+      keepAliveNode = { osc, gain };
+    }
+  } catch (e) {}
+}
+
+function stopKeepAlive() {
+  if (keepAliveNode) {
+    try {
+      keepAliveNode.osc.stop();
+      keepAliveNode.osc.disconnect();
+      keepAliveNode.gain.disconnect();
+    } catch (e) {}
+    keepAliveNode = null;
+  }
 }
 
 // ========== 通知系统 ==========
@@ -2120,6 +2170,8 @@ function startTimer() {
   targetEndTime = Date.now() + remainingSeconds * 1000;
   updateButtonUI();
   if (!silentMode) playClickSound();
+  requestWakeLock();
+  startKeepAlive();
 
   intervalId = setInterval(() => {
     const now = Date.now();
@@ -2144,6 +2196,8 @@ function pauseTimer() {
   remainingSeconds = Math.max(0, Math.round((targetEndTime - Date.now()) / 1000));
   updateButtonUI();
   timerSeparatorEl.classList.add("paused");
+  releaseWakeLock();
+  stopKeepAlive();
 }
 
 function resetTimer() {
@@ -2356,6 +2410,11 @@ document.addEventListener("visibilitychange", () => {
         return;
       }
       remainingSeconds = corrected;
+    }
+    // 从后台恢复时重新获取 Wake Lock
+    if (isRunning && !wakeLock) {
+      requestWakeLock();
+      startKeepAlive();
     }
     updateTimerDisplay();
     updateRingProgress();
