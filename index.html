@@ -797,7 +797,7 @@ body {
 
 .stats-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(3, 1fr);
   gap: 12px;
   margin-bottom: 16px;
 }
@@ -863,6 +863,79 @@ body {
   border-radius: 3px;
   transition: width 0.6s ease;
   box-shadow: 0 0 8px rgba(236, 64, 122, 0.3);
+}
+
+/* 每周柱状图 */
+.weekly-chart {
+  margin-bottom: 18px;
+  padding: 0 2px;
+}
+.chart-header {
+  font-size: 0.75rem;
+  color: var(--text-mid);
+  margin-bottom: 12px;
+}
+.chart-bars {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  height: 120px;
+  padding: 0 4px;
+  gap: 6px;
+}
+.chart-bar-wrap {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  height: 100%;
+  justify-content: flex-end;
+}
+.chart-bar {
+  width: 100%;
+  max-width: 36px;
+  border-radius: 6px 6px 2px 2px;
+  background: rgba(66, 165, 245, 0.18);
+  min-height: 4px;
+  transition: height 0.5s ease;
+  position: relative;
+}
+.chart-bar.has-data {
+  background: linear-gradient(180deg, #64b5f6, #42a5f5);
+  box-shadow: 0 2px 8px rgba(66, 165, 245, 0.3);
+}
+.chart-bar.today {
+  background: linear-gradient(180deg, #ec407a, #f06292);
+  box-shadow: 0 2px 8px rgba(236, 64, 122, 0.35);
+}
+.chart-days {
+  display: flex;
+  justify-content: space-between;
+  padding: 0 4px;
+  gap: 6px;
+}
+.chart-days .chart-bar-label {
+  flex: 1;
+  font-size: 0.65rem;
+  color: var(--text-mid);
+  margin-top: 6px;
+  text-align: center;
+}
+.bar-tooltip {
+  position: absolute;
+  top: -22px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.62rem;
+  color: #42a5f5;
+  white-space: nowrap;
+  opacity: 0;
+  transition: opacity 0.2s;
+  pointer-events: none;
+}
+.chart-bar:hover .bar-tooltip,
+.chart-bar:active .bar-tooltip {
+  opacity: 1;
 }
 
 .btn-text {
@@ -1512,6 +1585,18 @@ body {
           <span class="stat-value" id="statFocusTime">0 分钟</span>
           <span class="stat-label">今日推理时长</span>
         </div>
+        <div class="stat-card">
+          <span class="stat-icon">📵</span>
+          <span class="stat-value" id="statInterrupts">0</span>
+          <span class="stat-label">今日打断次数</span>
+        </div>
+      </div>
+      <div class="weekly-chart" id="weeklyChart">
+        <div class="chart-header">
+          <span>本周推理时长</span>
+        </div>
+        <div class="chart-bars" id="chartBars"></div>
+        <div class="chart-days" id="chartDays"></div>
       </div>
       <div class="daily-goal">
         <div class="goal-header">
@@ -1627,6 +1712,9 @@ const statToday = document.getElementById("statToday");
 const statTotal = document.getElementById("statTotal");
 const statStreak = document.getElementById("statStreak");
 const statFocusTime = document.getElementById("statFocusTime");
+const statInterrupts = document.getElementById("statInterrupts");
+const chartBars = document.getElementById("chartBars");
+const chartDays = document.getElementById("chartDays");
 const goalFill = document.getElementById("goalFill");
 const goalLabel = document.getElementById("goalLabel");
 
@@ -1642,6 +1730,7 @@ let targetEndTime = null; // 目标结束时间戳，用于后台计时修正
 let silentMode = false;   // 静音模式
 let wakeLock = null;      // 屏幕唤醒锁
 let keepAliveNode = null; // 静默音频保持后台活跃
+let sessionInterrupts = 0; // 当前工作时段被打断次数
 
 // ========== 初始化环形进度条 ==========
 ringProgress.style.strokeDasharray = String(RING_CIRCUMFERENCE);
@@ -1939,8 +2028,10 @@ function loadStats() {
     todayCount: 0,
     totalCount: 0,
     todayFocusMinutes: 0,
+    todayInterrupts: 0,
     streakDays: 0,
     lastActiveDate: null,
+    weeklyData: [],
   };
 
   try {
@@ -1951,6 +2042,7 @@ function loadStats() {
       parsed.todayDate = getTodayStr();
       parsed.todayCount = 0;
       parsed.todayFocusMinutes = 0;
+      parsed.todayInterrupts = 0;
     }
     return { ...defaultStats, ...parsed };
   } catch (e) {
@@ -1986,11 +2078,28 @@ function recordCompletedPomodoro() {
     stats.streakDays = 1;
   }
 
+  var focusMin = Math.round(totalWorkSec / 60);
   stats.todayCount += 1;
   stats.totalCount += 1;
-  stats.todayFocusMinutes += Math.round(totalWorkSec / 60);
+  stats.todayFocusMinutes += focusMin;
+  stats.todayInterrupts += sessionInterrupts;
+  sessionInterrupts = 0;
   stats.lastActiveDate = today;
   stats.todayDate = today;
+
+  if (!stats.weeklyData) stats.weeklyData = [];
+  var todayEntry = stats.weeklyData.find(function(d) { return d.date === today; });
+  if (todayEntry) {
+    todayEntry.minutes += focusMin;
+  } else {
+    stats.weeklyData.push({ date: today, minutes: focusMin });
+  }
+  var cutoff = new Date();
+  cutoff.setDate(cutoff.getDate() - 14);
+  var cutoffStr = cutoff.getFullYear() + "-" +
+    String(cutoff.getMonth() + 1).padStart(2, "0") + "-" +
+    String(cutoff.getDate()).padStart(2, "0");
+  stats.weeklyData = stats.weeklyData.filter(function(d) { return d.date >= cutoffStr; });
 
   saveStats(stats);
   renderStats(stats);
@@ -2005,15 +2114,74 @@ function renderStats(stats) {
   statTotal.textContent = String(stats.totalCount);
   statStreak.textContent = String(stats.streakDays);
   statFocusTime.textContent = `${stats.todayFocusMinutes} 分钟`;
+  statInterrupts.textContent = String(stats.todayInterrupts || 0);
 
   const pct = Math.min(100, Math.round((stats.todayCount / DAILY_GOAL) * 100));
   goalFill.style.width = `${pct}%`;
   goalLabel.textContent = `${stats.todayCount} / ${DAILY_GOAL} 案件`;
+
+  renderWeeklyChart(stats);
+}
+
+function renderWeeklyChart(stats) {
+  var today = getTodayStr();
+  var data = stats.weeklyData || [];
+  var days = [];
+  for (var i = 6; i >= 0; i--) {
+    var d = new Date();
+    d.setDate(d.getDate() - i);
+    var dateStr = d.getFullYear() + "-" +
+      String(d.getMonth() + 1).padStart(2, "0") + "-" +
+      String(d.getDate()).padStart(2, "0");
+    var entry = data.find(function(e) { return e.date === dateStr; });
+    var dayNames = ["日", "一", "二", "三", "四", "五", "六"];
+    days.push({
+      date: dateStr,
+      label: dayNames[d.getDay()],
+      minutes: entry ? entry.minutes : 0,
+      isToday: dateStr === today,
+    });
+  }
+
+  var maxMin = Math.max.apply(null, days.map(function(d) { return d.minutes; }));
+  var maxHeight = 110;
+
+  chartBars.innerHTML = "";
+  chartDays.innerHTML = "";
+
+  days.forEach(function(day) {
+    var wrap = document.createElement("div");
+    wrap.className = "chart-bar-wrap";
+
+    var bar = document.createElement("div");
+    bar.className = "chart-bar";
+    if (day.minutes > 0) bar.classList.add("has-data");
+    if (day.isToday) bar.classList.add("today");
+
+    var h = maxMin > 0 ? Math.max(6, Math.round((day.minutes / maxMin) * maxHeight)) : 6;
+    bar.style.height = h + "px";
+    bar.title = day.minutes + " 分钟";
+
+    var tooltip = document.createElement("span");
+    tooltip.className = "bar-tooltip";
+    tooltip.textContent = day.minutes + "分钟";
+    bar.appendChild(tooltip);
+
+    wrap.appendChild(bar);
+
+    var label = document.createElement("span");
+    label.className = "chart-bar-label";
+    label.textContent = day.label;
+
+    chartBars.appendChild(wrap);
+    chartDays.appendChild(label);
+  });
 }
 
 function clearAllStats() {
   if (confirm("确定要清除所有调查记录吗？此操作不可撤销。")) {
     localStorage.removeItem(STORAGE_KEY);
+    sessionInterrupts = 0;
     renderStats(loadStats());
     showToast("调查记录已清除");
   }
@@ -2198,6 +2366,7 @@ function pauseTimer() {
   timerSeparatorEl.classList.add("paused");
   releaseWakeLock();
   stopKeepAlive();
+  if (mode === MODE_WORK) sessionInterrupts++;
 }
 
 function resetTimer() {
@@ -2205,6 +2374,7 @@ function resetTimer() {
   pauseTimer();
   remainingSeconds = mode === MODE_WORK ? totalWorkSec : totalBreakSec;
   targetEndTime = null;
+  sessionInterrupts = 0;
   updateTimerDisplay();
   updateRingProgress();
   timerSeparatorEl.classList.add("paused");

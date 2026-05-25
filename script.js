@@ -68,6 +68,9 @@ const statToday = document.getElementById("statToday");
 const statTotal = document.getElementById("statTotal");
 const statStreak = document.getElementById("statStreak");
 const statFocusTime = document.getElementById("statFocusTime");
+const statInterrupts = document.getElementById("statInterrupts");
+const chartBars = document.getElementById("chartBars");
+const chartDays = document.getElementById("chartDays");
 const goalFill = document.getElementById("goalFill");
 const goalLabel = document.getElementById("goalLabel");
 
@@ -83,6 +86,7 @@ let targetEndTime = null; // 目标结束时间戳，用于后台计时修正
 let silentMode = false;   // 静音模式
 let wakeLock = null;      // 屏幕唤醒锁
 let keepAliveNode = null; // 静默音频保持后台活跃
+let sessionInterrupts = 0; // 当前工作时段被打断次数
 
 // ========== 初始化环形进度条 ==========
 ringProgress.style.strokeDasharray = String(RING_CIRCUMFERENCE);
@@ -380,8 +384,10 @@ function loadStats() {
     todayCount: 0,
     totalCount: 0,
     todayFocusMinutes: 0,
+    todayInterrupts: 0,
     streakDays: 0,
     lastActiveDate: null,
+    weeklyData: [],
   };
 
   try {
@@ -392,6 +398,7 @@ function loadStats() {
       parsed.todayDate = getTodayStr();
       parsed.todayCount = 0;
       parsed.todayFocusMinutes = 0;
+      parsed.todayInterrupts = 0;
     }
     return { ...defaultStats, ...parsed };
   } catch (e) {
@@ -427,11 +434,30 @@ function recordCompletedPomodoro() {
     stats.streakDays = 1;
   }
 
+  const focusMin = Math.round(totalWorkSec / 60);
   stats.todayCount += 1;
   stats.totalCount += 1;
-  stats.todayFocusMinutes += Math.round(totalWorkSec / 60);
+  stats.todayFocusMinutes += focusMin;
+  stats.todayInterrupts += sessionInterrupts;
+  sessionInterrupts = 0;
   stats.lastActiveDate = today;
   stats.todayDate = today;
+
+  // 每周数据：累加今日专注分钟
+  if (!stats.weeklyData) stats.weeklyData = [];
+  const todayEntry = stats.weeklyData.find(function(d) { return d.date === today; });
+  if (todayEntry) {
+    todayEntry.minutes += focusMin;
+  } else {
+    stats.weeklyData.push({ date: today, minutes: focusMin });
+  }
+  // 只保留最近 14 天
+  const cutoff = new Date();
+  cutoff.setDate(cutoff.getDate() - 14);
+  const cutoffStr = cutoff.getFullYear() + "-" +
+    String(cutoff.getMonth() + 1).padStart(2, "0") + "-" +
+    String(cutoff.getDate()).padStart(2, "0");
+  stats.weeklyData = stats.weeklyData.filter(function(d) { return d.date >= cutoffStr; });
 
   saveStats(stats);
   renderStats(stats);
@@ -446,15 +472,75 @@ function renderStats(stats) {
   statTotal.textContent = String(stats.totalCount);
   statStreak.textContent = String(stats.streakDays);
   statFocusTime.textContent = `${stats.todayFocusMinutes} 分钟`;
+  statInterrupts.textContent = String(stats.todayInterrupts || 0);
 
   const pct = Math.min(100, Math.round((stats.todayCount / DAILY_GOAL) * 100));
   goalFill.style.width = `${pct}%`;
   goalLabel.textContent = `${stats.todayCount} / ${DAILY_GOAL} 案件`;
+
+  renderWeeklyChart(stats);
+}
+
+function renderWeeklyChart(stats) {
+  const today = getTodayStr();
+  const data = stats.weeklyData || [];
+  // 生成最近 7 天
+  const days = [];
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date();
+    d.setDate(d.getDate() - i);
+    const dateStr = d.getFullYear() + "-" +
+      String(d.getMonth() + 1).padStart(2, "0") + "-" +
+      String(d.getDate()).padStart(2, "0");
+    const entry = data.find(function(e) { return e.date === dateStr; });
+    const dayNames = ["日", "一", "二", "三", "四", "五", "六"];
+    days.push({
+      date: dateStr,
+      label: dayNames[d.getDay()],
+      minutes: entry ? entry.minutes : 0,
+      isToday: dateStr === today,
+    });
+  }
+
+  const maxMin = Math.max.apply(null, days.map(function(d) { return d.minutes; }));
+  const maxHeight = 110; // px
+
+  chartBars.innerHTML = "";
+  chartDays.innerHTML = "";
+
+  days.forEach(function(day) {
+    var wrap = document.createElement("div");
+    wrap.className = "chart-bar-wrap";
+
+    var bar = document.createElement("div");
+    bar.className = "chart-bar";
+    if (day.minutes > 0) bar.classList.add("has-data");
+    if (day.isToday) bar.classList.add("today");
+
+    var h = maxMin > 0 ? Math.max(6, Math.round((day.minutes / maxMin) * maxHeight)) : 6;
+    bar.style.height = h + "px";
+    bar.title = day.minutes + " 分钟";
+
+    var tooltip = document.createElement("span");
+    tooltip.className = "bar-tooltip";
+    tooltip.textContent = day.minutes + "分钟";
+    bar.appendChild(tooltip);
+
+    wrap.appendChild(bar);
+
+    var label = document.createElement("span");
+    label.className = "chart-bar-label";
+    label.textContent = day.label;
+
+    chartBars.appendChild(wrap);
+    chartDays.appendChild(label);
+  });
 }
 
 function clearAllStats() {
   if (confirm("确定要清除所有调查记录吗？此操作不可撤销。")) {
     localStorage.removeItem(STORAGE_KEY);
+    sessionInterrupts = 0;
     renderStats(loadStats());
     showToast("调查记录已清除");
   }
@@ -638,6 +724,7 @@ function pauseTimer() {
   timerSeparatorEl.classList.add("paused");
   releaseWakeLock();
   stopKeepAlive();
+  if (mode === MODE_WORK) sessionInterrupts++;
 }
 
 function resetTimer() {
@@ -645,6 +732,7 @@ function resetTimer() {
   pauseTimer();
   remainingSeconds = mode === MODE_WORK ? totalWorkSec : totalBreakSec;
   targetEndTime = null;
+  sessionInterrupts = 0;
   updateTimerDisplay();
   updateRingProgress();
   timerSeparatorEl.classList.add("paused");
