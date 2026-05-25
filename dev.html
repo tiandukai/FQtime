@@ -108,31 +108,35 @@
     <!-- 时间自定义设置 -->
     <section class="settings-section">
       <div class="settings-header">
-        <span class="settings-icon">⚙️</span>
-        <h2 class="settings-title">自定义时间</h2>
+        <span class="settings-icon">⏱</span>
+        <h2 class="settings-title">时间设置</h2>
       </div>
-      <div class="settings-grid">
-        <div class="setting-item">
-          <div class="setting-label-row">
-            <label class="setting-label">🔍 调查时间</label>
-            <span class="setting-value" id="workValue">45 分钟</span>
+
+      <div class="picker-tabs">
+        <button class="picker-tab active" data-mode="work">🔍 调查时间</button>
+        <button class="picker-tab" data-mode="break">☕ 休息时间</button>
+      </div>
+
+      <div class="picker-display" id="pickerDisplay">45 分钟</div>
+
+      <div class="picker-container">
+        <div class="picker-highlight"></div>
+        <div class="picker-columns">
+          <div class="picker-column" id="pickerHours">
+            <div class="picker-list"></div>
           </div>
-          <input type="range" class="setting-slider" id="workSec" min="5" max="7200" step="5" value="2700">
-          <div class="slider-ticks">
-            <span>5秒</span><span>15分</span><span>30分</span><span>60分</span><span>120分</span>
+          <div class="picker-column" id="pickerMinutes">
+            <div class="picker-list"></div>
+          </div>
+          <div class="picker-column" id="pickerSeconds">
+            <div class="picker-list"></div>
           </div>
         </div>
-        <div class="setting-item">
-          <div class="setting-label-row">
-            <label class="setting-label">☕ 休息时间</label>
-            <span class="setting-value" id="breakValue">5 分钟</span>
-          </div>
-          <input type="range" class="setting-slider" id="breakSec" min="5" max="3600" step="5" value="300">
-          <div class="slider-ticks">
-            <span>5秒</span><span>15分</span><span>30分</span><span>45分</span><span>60分</span>
-          </div>
+        <div class="picker-labels">
+          <span>时</span><span>分</span><span>秒</span>
         </div>
       </div>
+
       <button class="btn btn-apply" id="btnApplyTime">应用设置</button>
     </section>
 

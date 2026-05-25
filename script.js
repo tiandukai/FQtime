@@ -57,8 +57,11 @@ const btnReset = document.getElementById("btnReset");
 const btnSkip = document.getElementById("btnSkip");
 const btnClearStats = document.getElementById("btnClearStats");
 const btnApplyTime = document.getElementById("btnApplyTime");
-const inputWorkSec = document.getElementById("workSec");
-const inputBreakSec = document.getElementById("breakSec");
+const pickerHours = document.getElementById("pickerHours");
+const pickerMinutes = document.getElementById("pickerMinutes");
+const pickerSeconds = document.getElementById("pickerSeconds");
+const pickerDisplay = document.getElementById("pickerDisplay");
+const pickerTabs = document.querySelectorAll(".picker-tab");
 const encourageText = document.getElementById("encourageText");
 
 const statToday = document.getElementById("statToday");
@@ -109,8 +112,13 @@ function saveTimeConfig() {
 
 function applyTimeConfig() {
   remainingSeconds = mode === MODE_WORK ? totalWorkSec : totalBreakSec;
-  inputWorkSec.value = totalWorkSec;
-  inputBreakSec.value = totalBreakSec;
+  pickerWorkSec = totalWorkSec;
+  pickerBreakSec = totalBreakSec;
+  if (pickerMode === "work") {
+    scrollPickerTo(pickerWorkSec, getMaxHours());
+  } else {
+    scrollPickerTo(pickerBreakSec, getMaxHours());
+  }
   updateTimerDisplay();
   updateRingProgress();
   timerSeparatorEl.classList.add("paused");
@@ -248,10 +256,18 @@ function showToast(message) {
 
 // ========== UI 更新 ==========
 function updateTimerDisplay() {
-  const mins = Math.floor(remainingSeconds / 60);
-  const secs = remainingSeconds % 60;
-  timerMinutes.textContent = String(mins).padStart(2, "0");
-  timerSeconds.textContent = String(secs).padStart(2, "0");
+  const h = Math.floor(remainingSeconds / 3600);
+  const m = Math.floor((remainingSeconds % 3600) / 60);
+  const s = remainingSeconds % 60;
+  if (h > 0) {
+    timerMinutes.textContent = String(h).padStart(2, "0") + ":" + String(m).padStart(2, "0");
+    timerSeconds.textContent = String(s).padStart(2, "0");
+    timerSeparatorEl.style.display = "none";
+  } else {
+    timerMinutes.textContent = String(m).padStart(2, "0");
+    timerSeconds.textContent = String(s).padStart(2, "0");
+    timerSeparatorEl.style.display = "";
+  }
 }
 
 function updateRingProgress() {
@@ -394,34 +410,143 @@ function clearAllStats() {
   }
 }
 
-// ========== 自定义时间 ==========
+// ========== 自定义时间 + iOS 滚轮选择器 ==========
+
+// 滚轮状态
+let pickerMode = "work";
+let pickerWorkSec = DEFAULT_WORK_SEC;
+let pickerBreakSec = DEFAULT_BREAK_SEC;
+let pickerScrollTimers = { hours: null, minutes: null, seconds: null };
+
+function getMaxHours() {
+  const maxSec = pickerMode === "work" ? 7200 : 3600;
+  return Math.floor(maxSec / 3600);
+}
+
 function formatSeconds(totalSec) {
-  if (totalSec < 60) return totalSec + " 秒";
-  var m = Math.floor(totalSec / 60);
-  var s = totalSec % 60;
-  if (s === 0) return m + " 分钟";
-  return m + "分" + s + "秒";
+  const h = Math.floor(totalSec / 3600);
+  const m = Math.floor((totalSec % 3600) / 60);
+  const s = totalSec % 60;
+  if (h > 0) {
+    if (s > 0) return h + "时" + m + "分" + s + "秒";
+    if (m > 0) return h + "时" + m + "分钟";
+    return h + "小时";
+  }
+  if (m > 0) {
+    if (s > 0) return m + "分" + s + "秒";
+    return m + " 分钟";
+  }
+  return s + " 秒";
+}
+
+function getCurrentPickerSeconds() {
+  const h = getSelectedValue(pickerHours);
+  const m = getSelectedValue(pickerMinutes);
+  const s = getSelectedValue(pickerSeconds);
+  return h * 3600 + m * 60 + s;
+}
+
+function getSelectedValue(column) {
+  const scrollTop = column.scrollTop;
+  const itemHeight = 40;
+  const centerOffset = scrollTop;
+  const index = Math.round(centerOffset / itemHeight);
+  const items = column.querySelectorAll(".picker-item");
+  if (items.length === 0) return 0;
+  const clampedIndex = Math.max(0, Math.min(index, items.length - 1));
+  return parseInt(items[clampedIndex].dataset.value, 10);
+}
+
+function updatePickerSelection(column) {
+  const items = column.querySelectorAll(".picker-item");
+  const selectedVal = getSelectedValue(column);
+  items.forEach(item => {
+    const val = parseInt(item.dataset.value, 10);
+    item.classList.toggle("selected", val === selectedVal);
+  });
+}
+
+function onPickerScroll(column) {
+  if (pickerScrollTimers[column.id]) clearTimeout(pickerScrollTimers[column.id]);
+  pickerScrollTimers[column.id] = setTimeout(() => {
+    updatePickerSelection(column);
+    updatePickerDisplay();
+  }, 80);
+}
+
+function updatePickerDisplay() {
+  const totalSec = getCurrentPickerSeconds();
+  pickerDisplay.textContent = formatSeconds(Math.max(totalSec, 5));
+}
+
+function buildPickerItems(column, start, end, step) {
+  const list = column.querySelector(".picker-list");
+  list.innerHTML = "";
+  for (let i = start; i <= end; i += step) {
+    const div = document.createElement("div");
+    div.className = "picker-item";
+    div.dataset.value = i;
+    div.textContent = String(i).padStart(2, "0");
+    list.appendChild(div);
+  }
+}
+
+function buildAllPickerItems() {
+  const maxH = getMaxHours();
+  buildPickerItems(pickerHours, 0, maxH, 1);
+  buildPickerItems(pickerMinutes, 0, 59, 1);
+  buildPickerItems(pickerSeconds, 0, 59, 5);
+}
+
+function scrollPickerTo(totalSec, maxHours) {
+  const h = Math.min(Math.floor(totalSec / 3600), maxHours);
+  const m = Math.floor((totalSec % 3600) / 60);
+  const s = Math.round((totalSec % 60) / 5) * 5;
+  const itemH = 40;
+
+  scrollColumnTo(pickerHours, h, itemH);
+  scrollColumnTo(pickerMinutes, m, itemH);
+  scrollColumnTo(pickerSeconds, s / 5, itemH);
+}
+
+function scrollColumnTo(column, index, itemH) {
+  column.scrollTo({ top: index * itemH, behavior: "instant" });
+  setTimeout(() => updatePickerSelection(column), 50);
+}
+
+function switchPickerMode(newMode) {
+  pickerMode = newMode;
+  pickerTabs.forEach(tab => {
+    tab.classList.toggle("active", tab.dataset.mode === newMode);
+  });
+  buildAllPickerItems();
+  const sec = newMode === "work" ? pickerWorkSec : pickerBreakSec;
+  scrollPickerTo(sec, getMaxHours());
+  updatePickerDisplay();
 }
 
 function applyCustomTime() {
-  const ws = parseInt(inputWorkSec.value, 10);
-  const bs = parseInt(inputBreakSec.value, 10);
+  const totalSec = getCurrentPickerSeconds();
 
-  if (isNaN(ws) || ws < 5 || ws > 7200) {
-    showToast("调查时间请设置在 5秒-120分钟 之间");
-    inputWorkSec.value = totalWorkSec;
-    return;
-  }
-  if (isNaN(bs) || bs < 5 || bs > 3600) {
-    showToast("休息时间请设置在 5秒-60分钟 之间");
-    inputBreakSec.value = totalBreakSec;
+  if (totalSec < 5) {
+    showToast("时间不能少于 5 秒");
     return;
   }
 
-  const wasRunning = isRunning;
-  pauseTimer();
-  totalWorkSec = ws;
-  totalBreakSec = bs;
+  const maxSec = pickerMode === "work" ? 7200 : 3600;
+  if (totalSec > maxSec) {
+    showToast((pickerMode === "work" ? "调查" : "休息") + "时间请设置在 5秒-" + Math.floor(maxSec/60) + "分钟 之间");
+    return;
+  }
+
+  if (pickerMode === "work") {
+    pickerWorkSec = totalSec;
+    totalWorkSec = totalSec;
+  } else {
+    pickerBreakSec = totalSec;
+    totalBreakSec = totalSec;
+  }
+
   applyTimeConfig();
   saveTimeConfig();
   showToast("时间设置已更新！加油！");
@@ -573,9 +698,15 @@ function loadSilentMode() {
 }
 
 function updateDocumentTitle() {
-  const mins = Math.floor(remainingSeconds / 60);
-  const secs = remainingSeconds % 60;
-  const time = `${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
+  const h = Math.floor(remainingSeconds / 3600);
+  const m = Math.floor((remainingSeconds % 3600) / 60);
+  const s = remainingSeconds % 60;
+  let time;
+  if (h > 0) {
+    time = `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+  } else {
+    time = `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+  }
   const icon = mode === MODE_WORK ? "🔍" : "☕";
   const label = mode === MODE_WORK ? "调查中" : "休息中";
   document.title = `${icon} ${time} · ${label} | 番茄钟`;
@@ -619,11 +750,28 @@ btnReset.addEventListener("touchcancel", endResetPress);
 btnSkip.addEventListener("click", skipSession);
 btnClearStats.addEventListener("click", clearAllStats);
 btnApplyTime.addEventListener("click", applyCustomTime);
-inputWorkSec.addEventListener("input", function () {
-  document.getElementById("workValue").textContent = formatSeconds(parseInt(this.value, 10));
+
+// ========== iOS 滚轮选择器事件 ==========
+pickerTabs.forEach(tab => {
+  tab.addEventListener("click", function () {
+    switchPickerMode(this.dataset.mode);
+  });
 });
-inputBreakSec.addEventListener("input", function () {
-  document.getElementById("breakValue").textContent = formatSeconds(parseInt(this.value, 10));
+
+[pickerHours, pickerMinutes, pickerSeconds].forEach(col => {
+  col.addEventListener("scroll", function () {
+    onPickerScroll(col);
+  });
+  // 触摸结束时做一次精确对齐
+  col.addEventListener("touchend", function () {
+    setTimeout(() => {
+      const val = getSelectedValue(col);
+      const itemH = 40;
+      col.scrollTo({ top: val * itemH, behavior: "smooth" });
+      updatePickerSelection(col);
+      updatePickerDisplay();
+    }, 100);
+  });
 });
 
 document.addEventListener("keydown", (e) => {
@@ -769,6 +917,7 @@ document.getElementById("taskAddInput").addEventListener("keydown", (e) => {
 
 // ========== 初始化 ==========
 function init() {
+  buildAllPickerItems();
   loadTimeConfig();
   loadSilentMode();
   updateModeUI();
