@@ -1424,6 +1424,7 @@ body {
 }
 
 
+
 </style>
 </head>
 <body>
@@ -1620,6 +1621,7 @@ body {
     <div class="glasses-text" id="glassesText">真相只有一个，该休息了</div>
   </div>
 
+  <video id="keepAwakeVideo" src="data:video/webm;base64,GkXfo59ChoEBQveBAULygQRC84EIQoKEd2VibUKHgQJChYECGFOAZwEAAAAAAAHTEU2bdLpNu4tTq4QVSalmU6yBoU27i1OrhBZUrmtTrIHGTbuMU6uEElTDZ1OsggEXTbuMU6uEHFO7a1OsggG97AEAAAAAAABZAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAVSalmoCrXsYMPQkBNgIRMYXZkA0K5nnf/4cAQhAZN8ARAHhM8tIw4PYmCFQ8BQQEBAQGQN37MAQHhMncA+jlCAAEBAQGQNyEBAACBAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABmZQ==" muted playsinline loop style="position:fixed;top:0;left:0;width:1px;height:1px;opacity:0.01;pointer-events:none;z-index:-1"></video>
   <script>
 
 /* ============================================
@@ -1697,6 +1699,7 @@ const pieChartSvg = document.getElementById("pieChartSvg");
 const pieChartCenter = document.getElementById("pieChartCenter");
 const pieCenterIcon = document.getElementById("pieCenterIcon");
 const pieCenterText = document.getElementById("pieCenterText");
+const keepAwakeVideo = document.getElementById("keepAwakeVideo");
 
 // ========== 状态 ==========
 let mode = MODE_WORK;
@@ -1882,6 +1885,26 @@ function stopKeepAlive() {
       keepAliveNode.gain.disconnect();
     } catch (e) {}
     keepAliveNode = null;
+  }
+}
+
+// 视频保活：阻止 iOS 息屏
+function startKeepAwake() {
+  if (!keepAwakeVideo) return;
+  keepAwakeVideo.play().catch(function() {});
+  // iOS 需要在每次用户交互后重新播放
+  document.addEventListener("visibilitychange", resumeKeepAwake);
+}
+
+function stopKeepAwake() {
+  if (!keepAwakeVideo) return;
+  keepAwakeVideo.pause();
+  document.removeEventListener("visibilitychange", resumeKeepAwake);
+}
+
+function resumeKeepAwake() {
+  if (!document.hidden && isRunning && keepAwakeVideo) {
+    keepAwakeVideo.play().catch(function() {});
   }
 }
 
@@ -2379,6 +2402,7 @@ function startTimer() {
   if (!silentMode) playClickSound();
   requestWakeLock();
   startKeepAlive();
+  startKeepAwake();
 
   intervalId = setInterval(() => {
     const now = Date.now();
@@ -2404,6 +2428,7 @@ function pauseTimer() {
   timerSeparatorEl.classList.add("paused");
   releaseWakeLock();
   stopKeepAlive();
+  stopKeepAwake();
   if (mode === MODE_WORK) sessionInterrupts++;
 }
 
@@ -2626,6 +2651,9 @@ document.addEventListener("visibilitychange", () => {
       requestWakeLock();
       startKeepAlive();
     }
+    if (isRunning) {
+      startKeepAwake();
+    }
     updateTimerDisplay();
     updateRingProgress();
     updateModeUI();
@@ -2762,6 +2790,7 @@ function init() {
   } else {
     init();
   }
+
 
 
 

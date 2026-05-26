@@ -74,6 +74,7 @@ const pieChartSvg = document.getElementById("pieChartSvg");
 const pieChartCenter = document.getElementById("pieChartCenter");
 const pieCenterIcon = document.getElementById("pieCenterIcon");
 const pieCenterText = document.getElementById("pieCenterText");
+const keepAwakeVideo = document.getElementById("keepAwakeVideo");
 
 // ========== 状态 ==========
 let mode = MODE_WORK;
@@ -259,6 +260,26 @@ function stopKeepAlive() {
       keepAliveNode.gain.disconnect();
     } catch (e) {}
     keepAliveNode = null;
+  }
+}
+
+// 视频保活：阻止 iOS 息屏
+function startKeepAwake() {
+  if (!keepAwakeVideo) return;
+  keepAwakeVideo.play().catch(function() {});
+  // iOS 需要在每次用户交互后重新播放
+  document.addEventListener("visibilitychange", resumeKeepAwake);
+}
+
+function stopKeepAwake() {
+  if (!keepAwakeVideo) return;
+  keepAwakeVideo.pause();
+  document.removeEventListener("visibilitychange", resumeKeepAwake);
+}
+
+function resumeKeepAwake() {
+  if (!document.hidden && isRunning && keepAwakeVideo) {
+    keepAwakeVideo.play().catch(function() {});
   }
 }
 
@@ -756,6 +777,7 @@ function startTimer() {
   if (!silentMode) playClickSound();
   requestWakeLock();
   startKeepAlive();
+  startKeepAwake();
 
   intervalId = setInterval(() => {
     const now = Date.now();
@@ -781,6 +803,7 @@ function pauseTimer() {
   timerSeparatorEl.classList.add("paused");
   releaseWakeLock();
   stopKeepAlive();
+  stopKeepAwake();
   if (mode === MODE_WORK) sessionInterrupts++;
 }
 
@@ -1002,6 +1025,9 @@ document.addEventListener("visibilitychange", () => {
     if (isRunning && !wakeLock) {
       requestWakeLock();
       startKeepAlive();
+    }
+    if (isRunning) {
+      startKeepAwake();
     }
     updateTimerDisplay();
     updateRingProgress();
