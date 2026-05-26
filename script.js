@@ -75,6 +75,8 @@ const pieChartCenter = document.getElementById("pieChartCenter");
 const pieCenterIcon = document.getElementById("pieCenterIcon");
 const pieCenterText = document.getElementById("pieCenterText");
 const keepAwakeVideo = document.getElementById("keepAwakeVideo");
+const btnStatsToggle = document.getElementById("btnStatsToggle");
+const statsCollapse = document.getElementById("statsCollapse");
 
 // ========== 状态 ==========
 let mode = MODE_WORK;
@@ -1005,6 +1007,23 @@ document.addEventListener("keydown", (e) => {
 });
 
 document.getElementById("btnSilent").addEventListener("click", toggleSilentMode);
+
+var statsVisible = false;
+function toggleStatsPanel() {
+  statsVisible = !statsVisible;
+  if (statsVisible) {
+    statsCollapse.classList.add("open");
+    btnStatsToggle.style.color = "#42a5f5";
+    refreshStatsForToday();
+  } else {
+    statsCollapse.classList.remove("open");
+    btnStatsToggle.style.color = "";
+  }
+}
+btnStatsToggle.addEventListener("click", function() {
+  if (!silentMode) playClickSound();
+  toggleStatsPanel();
+});
 
 document.addEventListener("visibilitychange", () => {
   if (!document.hidden) {

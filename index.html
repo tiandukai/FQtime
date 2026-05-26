@@ -782,6 +782,16 @@ body {
 }
 
 /* ========== 统计面板 ========== */
+.stats-collapse {
+  overflow: hidden;
+  transition: max-height 0.4s ease, opacity 0.3s ease;
+  max-height: 0;
+  opacity: 0;
+}
+.stats-collapse.open {
+  max-height: 800px;
+  opacity: 1;
+}
 .stats-section {
   background: rgba(255, 255, 255, 0.8);
   backdrop-filter: blur(10px);
@@ -1425,6 +1435,7 @@ body {
 
 
 
+
 </style>
 </head>
 <body>
@@ -1505,6 +1516,7 @@ body {
           <button class="btn btn-icon-only" id="btnReset" title="重置">↺</button>
           <button class="btn btn-icon-only" id="btnSkip" title="跳过">⏭</button>
           <button class="btn btn-icon-only silent-btn" id="btnSilent" title="静音切换">🔊</button>
+          <button class="btn btn-icon-only" id="btnStatsToggle" title="推理记录">📊</button>
         </div>
       </div>
     </main>
@@ -1556,6 +1568,7 @@ body {
       <button class="btn btn-apply" id="btnApplyTime">应用设置</button>
     </section>
 
+    <div class="stats-collapse" id="statsCollapse">
     <section class="stats-section">
       <div class="evidence-header">
         <span class="evidence-icon">📋</span>
@@ -1589,6 +1602,7 @@ body {
       </div>
       <button class="btn btn-text" id="btnClearStats">重置档案记录</button>
     </section>
+    </div>
 
     <footer class="footer">
       <div class="footer-seal">🔍</div>
@@ -1700,6 +1714,8 @@ const pieChartCenter = document.getElementById("pieChartCenter");
 const pieCenterIcon = document.getElementById("pieCenterIcon");
 const pieCenterText = document.getElementById("pieCenterText");
 const keepAwakeVideo = document.getElementById("keepAwakeVideo");
+const btnStatsToggle = document.getElementById("btnStatsToggle");
+const statsCollapse = document.getElementById("statsCollapse");
 
 // ========== 状态 ==========
 let mode = MODE_WORK;
@@ -2631,6 +2647,23 @@ document.addEventListener("keydown", (e) => {
 
 document.getElementById("btnSilent").addEventListener("click", toggleSilentMode);
 
+var statsVisible = false;
+function toggleStatsPanel() {
+  statsVisible = !statsVisible;
+  if (statsVisible) {
+    statsCollapse.classList.add("open");
+    btnStatsToggle.style.color = "#42a5f5";
+    refreshStatsForToday();
+  } else {
+    statsCollapse.classList.remove("open");
+    btnStatsToggle.style.color = "";
+  }
+}
+btnStatsToggle.addEventListener("click", function() {
+  if (!silentMode) playClickSound();
+  toggleStatsPanel();
+});
+
 document.addEventListener("visibilitychange", () => {
   if (!document.hidden) {
     if (isRunning && targetEndTime) {
@@ -2790,6 +2823,7 @@ function init() {
   } else {
     init();
   }
+
 
 
 
