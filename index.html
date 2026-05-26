@@ -783,14 +783,10 @@ body {
 
 /* ========== 统计面板 ========== */
 .stats-collapse {
-  overflow: hidden;
-  transition: max-height 0.4s ease, opacity 0.3s ease;
-  max-height: 0;
-  opacity: 0;
+  display: none;
 }
 .stats-collapse.open {
-  max-height: 800px;
-  opacity: 1;
+  display: block;
 }
 .stats-section {
   background: rgba(255, 255, 255, 0.8);
@@ -1432,6 +1428,7 @@ body {
   .photo-4 { top: 38%; left: 1%; width: 160px; }
   .photo-5 { top: 36%; right: 2%; width: 140px; }
 }
+
 
 
 
@@ -2649,20 +2646,24 @@ document.getElementById("btnSilent").addEventListener("click", toggleSilentMode)
 
 var statsVisible = false;
 function toggleStatsPanel() {
+  if (!statsCollapse) return;
   statsVisible = !statsVisible;
   if (statsVisible) {
     statsCollapse.classList.add("open");
-    btnStatsToggle.style.color = "#42a5f5";
+    if (btnStatsToggle) btnStatsToggle.style.color = "#42a5f5";
     refreshStatsForToday();
+    showToast("推理记录已展开");
   } else {
     statsCollapse.classList.remove("open");
-    btnStatsToggle.style.color = "";
+    if (btnStatsToggle) btnStatsToggle.style.color = "";
   }
 }
-btnStatsToggle.addEventListener("click", function() {
-  if (!silentMode) playClickSound();
-  toggleStatsPanel();
-});
+if (btnStatsToggle) {
+  btnStatsToggle.addEventListener("click", function() {
+    if (!silentMode) playClickSound();
+    toggleStatsPanel();
+  });
+}
 
 document.addEventListener("visibilitychange", () => {
   if (!document.hidden) {
@@ -2823,6 +2824,7 @@ function init() {
   } else {
     init();
   }
+
 
 
 

@@ -1010,20 +1010,24 @@ document.getElementById("btnSilent").addEventListener("click", toggleSilentMode)
 
 var statsVisible = false;
 function toggleStatsPanel() {
+  if (!statsCollapse) return;
   statsVisible = !statsVisible;
   if (statsVisible) {
     statsCollapse.classList.add("open");
-    btnStatsToggle.style.color = "#42a5f5";
+    if (btnStatsToggle) btnStatsToggle.style.color = "#42a5f5";
     refreshStatsForToday();
+    showToast("推理记录已展开");
   } else {
     statsCollapse.classList.remove("open");
-    btnStatsToggle.style.color = "";
+    if (btnStatsToggle) btnStatsToggle.style.color = "";
   }
 }
-btnStatsToggle.addEventListener("click", function() {
-  if (!silentMode) playClickSound();
-  toggleStatsPanel();
-});
+if (btnStatsToggle) {
+  btnStatsToggle.addEventListener("click", function() {
+    if (!silentMode) playClickSound();
+    toggleStatsPanel();
+  });
+}
 
 document.addEventListener("visibilitychange", () => {
   if (!document.hidden) {
