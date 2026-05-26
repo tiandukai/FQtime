@@ -906,9 +906,11 @@ pickerTabs.forEach(tab => {
   // 触摸结束时做一次精确对齐
   col.addEventListener("touchend", function () {
     setTimeout(() => {
-      const val = getSelectedValue(col);
       const itemH = 40;
-      col.scrollTo({ top: val * itemH, behavior: "smooth" });
+      const index = Math.round(col.scrollTop / itemH);
+      const items = col.querySelectorAll(".picker-item");
+      const clampedIndex = Math.max(0, Math.min(index, items.length - 1));
+      col.scrollTo({ top: clampedIndex * itemH, behavior: "smooth" });
       updatePickerSelection(col);
       updatePickerDisplay();
     }, 100);
