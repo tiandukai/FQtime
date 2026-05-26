@@ -11,6 +11,7 @@
   <link rel="manifest" href="manifest.json">
   <title>真相只有一个 —— 番茄钟</title>
   <style>
+
 /* ============================================
    番茄钟 —— 柯南&小兰 可爱主题
    蓝色计时 + 琥珀休息 配色
@@ -576,10 +577,10 @@ body {
   border-color: rgba(0, 0, 0, 0.08);
 }
 
-/* ========== 时间设置 + iOS 滚轮选择器 ========== */
+/* ========== 时间自定义设置 ========== */
 .settings-section {
-  background: rgba(255, 255, 255, 0.25);
-  backdrop-filter: blur(12px);
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(10px);
   border-radius: var(--radius-lg);
   padding: 20px 22px;
   border: 2px solid rgba(187, 222, 251, 0.35);
@@ -599,6 +600,8 @@ body {
   letter-spacing: 1px;
   color: #37474f;
 }
+
+/* ========== iOS 风格滚轮时间选择器 ========== */
 
 /* 分段标签 */
 .picker-tabs {
@@ -761,10 +764,6 @@ body {
   border: none;
   cursor: pointer;
   transition: all var(--transition);
-}
-.btn-apply:hover {
-  background: linear-gradient(135deg, #90caf6, #64b5f6);
-  box-shadow: var(--shadow-blue);
 }
 .btn-apply:hover {
   background: linear-gradient(135deg, #90caf6, #64b5f6);
@@ -1422,12 +1421,14 @@ body {
   .stat-value { font-size: 1.3rem; }
   .controls { gap: 8px; }
 
+  /* 照片墙 — 移动端缩小 + 四角分布，互不遮挡 */
   .photo-kenan { bottom: 1.5%; width: 205px; }
   .photo-2 { top: 1.5%; left: 1%; width: 175px; }
   .photo-3 { top: 1%; right: 1%; width: 150px; }
   .photo-4 { top: 38%; left: 1%; width: 160px; }
   .photo-5 { top: 36%; right: 2%; width: 140px; }
 }
+
 </style>
 </head>
 <body>
@@ -1642,6 +1643,7 @@ body {
   </div>
 
   <script>
+
 /* ============================================
    番茄钟 —— 核心逻辑
    柯南&小兰 可爱主题
@@ -2078,7 +2080,7 @@ function recordCompletedPomodoro() {
     stats.streakDays = 1;
   }
 
-  var focusMin = Math.round(totalWorkSec / 60);
+  const focusMin = Math.round(totalWorkSec / 60);
   stats.todayCount += 1;
   stats.totalCount += 1;
   stats.todayFocusMinutes += focusMin;
@@ -2087,16 +2089,18 @@ function recordCompletedPomodoro() {
   stats.lastActiveDate = today;
   stats.todayDate = today;
 
+  // 每周数据：累加今日专注分钟
   if (!stats.weeklyData) stats.weeklyData = [];
-  var todayEntry = stats.weeklyData.find(function(d) { return d.date === today; });
+  const todayEntry = stats.weeklyData.find(function(d) { return d.date === today; });
   if (todayEntry) {
     todayEntry.minutes += focusMin;
   } else {
     stats.weeklyData.push({ date: today, minutes: focusMin });
   }
-  var cutoff = new Date();
+  // 只保留最近 14 天
+  const cutoff = new Date();
   cutoff.setDate(cutoff.getDate() - 14);
-  var cutoffStr = cutoff.getFullYear() + "-" +
+  const cutoffStr = cutoff.getFullYear() + "-" +
     String(cutoff.getMonth() + 1).padStart(2, "0") + "-" +
     String(cutoff.getDate()).padStart(2, "0");
   stats.weeklyData = stats.weeklyData.filter(function(d) { return d.date >= cutoffStr; });
@@ -2124,17 +2128,18 @@ function renderStats(stats) {
 }
 
 function renderWeeklyChart(stats) {
-  var today = getTodayStr();
-  var data = stats.weeklyData || [];
-  var days = [];
-  for (var i = 6; i >= 0; i--) {
-    var d = new Date();
+  const today = getTodayStr();
+  const data = stats.weeklyData || [];
+  // 生成最近 7 天
+  const days = [];
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date();
     d.setDate(d.getDate() - i);
-    var dateStr = d.getFullYear() + "-" +
+    const dateStr = d.getFullYear() + "-" +
       String(d.getMonth() + 1).padStart(2, "0") + "-" +
       String(d.getDate()).padStart(2, "0");
-    var entry = data.find(function(e) { return e.date === dateStr; });
-    var dayNames = ["日", "一", "二", "三", "四", "五", "六"];
+    const entry = data.find(function(e) { return e.date === dateStr; });
+    const dayNames = ["日", "一", "二", "三", "四", "五", "六"];
     days.push({
       date: dateStr,
       label: dayNames[d.getDay()],
@@ -2143,8 +2148,8 @@ function renderWeeklyChart(stats) {
     });
   }
 
-  var maxMin = Math.max.apply(null, days.map(function(d) { return d.minutes; }));
-  var maxHeight = 110;
+  const maxMin = Math.max.apply(null, days.map(function(d) { return d.minutes; }));
+  const maxHeight = 110; // px
 
   chartBars.innerHTML = "";
   chartDays.innerHTML = "";
@@ -2360,7 +2365,6 @@ function pauseTimer() {
   isRunning = false;
   clearInterval(intervalId);
   intervalId = null;
-  // 停止时保存剩余时间
   remainingSeconds = Math.max(0, Math.round((targetEndTime - Date.now()) / 1000));
   updateButtonUI();
   timerSeparatorEl.classList.add("paused");
@@ -2545,6 +2549,7 @@ pickerTabs.forEach(tab => {
   col.addEventListener("scroll", function () {
     onPickerScroll(col);
   });
+  // 触摸结束时做一次精确对齐
   col.addEventListener("touchend", function () {
     setTimeout(() => {
       const val = getSelectedValue(col);
@@ -2567,7 +2572,6 @@ document.getElementById("btnSilent").addEventListener("click", toggleSilentMode)
 
 document.addEventListener("visibilitychange", () => {
   if (!document.hidden) {
-    // 从后台恢复：根据目标时间戳补算实际剩余时间
     if (isRunning && targetEndTime) {
       const now = Date.now();
       const corrected = Math.max(0, Math.round((targetEndTime - now) / 1000));
@@ -2720,7 +2724,7 @@ function init() {
   } else {
     init();
   }
-})();
+
 </script>
 </body>
 </html>
