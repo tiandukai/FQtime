@@ -2,12 +2,12 @@
   "name": "真相只有一个 - 番茄钟",
   "short_name": "柯南番茄钟",
   "description": "江户川柯南主题可爱番茄钟，支持自定义时间、任务列表、统计记录",
-  "start_url": "/FQtime/",
-  "scope": "/FQtime/",
+  "start_url": "./",
+  "scope": "./",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#fce4ec",
-  "theme_color": "#ec407a",
+  "background_color": "#0a1628",
+  "theme_color": "#42a5f5",
   "icons": [
     {
       "src": "images/kenan.jpg",

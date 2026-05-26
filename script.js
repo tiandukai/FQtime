@@ -65,14 +65,15 @@ const pickerTabs = document.querySelectorAll(".picker-tab");
 const encourageText = document.getElementById("encourageText");
 
 const statToday = document.getElementById("statToday");
-const statTotal = document.getElementById("statTotal");
 const statStreak = document.getElementById("statStreak");
-const statFocusTime = document.getElementById("statFocusTime");
 const statInterrupts = document.getElementById("statInterrupts");
-const chartBars = document.getElementById("chartBars");
-const chartDays = document.getElementById("chartDays");
 const goalFill = document.getElementById("goalFill");
 const goalLabel = document.getElementById("goalLabel");
+const focusHeroValue = document.getElementById("focusHeroValue");
+const pieChartSvg = document.getElementById("pieChartSvg");
+const pieChartCenter = document.getElementById("pieChartCenter");
+const pieCenterIcon = document.getElementById("pieCenterIcon");
+const pieCenterText = document.getElementById("pieCenterText");
 
 // ========== 状态 ==========
 let mode = MODE_WORK;
@@ -469,71 +470,122 @@ function refreshStatsForToday() {
 
 function renderStats(stats) {
   statToday.textContent = String(stats.todayCount);
-  statTotal.textContent = String(stats.totalCount);
   statStreak.textContent = String(stats.streakDays);
-  statFocusTime.textContent = `${stats.todayFocusMinutes} 分钟`;
   statInterrupts.textContent = String(stats.todayInterrupts || 0);
 
-  const pct = Math.min(100, Math.round((stats.todayCount / DAILY_GOAL) * 100));
-  goalFill.style.width = `${pct}%`;
-  goalLabel.textContent = `${stats.todayCount} / ${DAILY_GOAL} 案件`;
+  focusHeroValue.textContent = String(stats.todayFocusMinutes);
 
-  renderWeeklyChart(stats);
+  var pct = Math.min(100, Math.round((stats.todayCount / DAILY_GOAL) * 100));
+  goalFill.style.width = pct + "%";
+  goalLabel.textContent = stats.todayCount + " / " + DAILY_GOAL + " 案件";
+
+  renderPieChart(stats);
 }
 
-function renderWeeklyChart(stats) {
-  const today = getTodayStr();
-  const data = stats.weeklyData || [];
-  // 生成最近 7 天
-  const days = [];
-  for (let i = 6; i >= 0; i--) {
-    const d = new Date();
-    d.setDate(d.getDate() - i);
-    const dateStr = d.getFullYear() + "-" +
-      String(d.getMonth() + 1).padStart(2, "0") + "-" +
-      String(d.getDate()).padStart(2, "0");
-    const entry = data.find(function(e) { return e.date === dateStr; });
-    const dayNames = ["日", "一", "二", "三", "四", "五", "六"];
-    days.push({
-      date: dateStr,
-      label: dayNames[d.getDay()],
-      minutes: entry ? entry.minutes : 0,
-      isToday: dateStr === today,
-    });
+// 饼图色板
+var PIE_COLORS = ["#42a5f5", "#ff9800", "#66bb6a", "#ef5350", "#ab47bc", "#26c6da", "#ffa726", "#5c6bc0"];
+
+function renderPieChart(stats) {
+  var tasks = loadTasks();
+  var completed = tasks.filter(function(t) { return t.done && (t.completions || 0) > 0; });
+
+  pieChartSvg.innerHTML = "";
+
+  if (completed.length === 0) {
+    // 空状态：灰色环
+    pieCenterIcon.textContent = "-";
+    pieCenterText.textContent = "暂无任务";
+    var emptyCircle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+    emptyCircle.setAttribute("cx", "100");
+    emptyCircle.setAttribute("cy", "100");
+    emptyCircle.setAttribute("r", "70");
+    emptyCircle.setAttribute("fill", "none");
+    emptyCircle.setAttribute("stroke", "rgba(255,255,255,0.15)");
+    emptyCircle.setAttribute("stroke-width", "20");
+    pieChartSvg.appendChild(emptyCircle);
+    return;
   }
 
-  const maxMin = Math.max.apply(null, days.map(function(d) { return d.minutes; }));
-  const maxHeight = 110; // px
+  pieCenterIcon.textContent = "🍅";
+  pieCenterText.textContent = completed.length + " 个任务";
 
-  chartBars.innerHTML = "";
-  chartDays.innerHTML = "";
+  var cx = 100, cy = 100, r = 70, strokeW = 20;
+  var total = 0;
+  completed.forEach(function(t) { total += (t.completions || 1); });
 
-  days.forEach(function(day) {
-    var wrap = document.createElement("div");
-    wrap.className = "chart-bar-wrap";
+  var angle = -Math.PI / 2; // 从顶部开始
+  var labelRadius = r + strokeW / 2 + 16;
 
-    var bar = document.createElement("div");
-    bar.className = "chart-bar";
-    if (day.minutes > 0) bar.classList.add("has-data");
-    if (day.isToday) bar.classList.add("today");
+  completed.forEach(function(t, i) {
+    var sliceAngle = ((t.completions || 1) / total) * Math.PI * 2;
+    var midAngle = angle + sliceAngle / 2;
 
-    var h = maxMin > 0 ? Math.max(6, Math.round((day.minutes / maxMin) * maxHeight)) : 6;
-    bar.style.height = h + "px";
-    bar.title = day.minutes + " 分钟";
+    // 扇区路径
+    var x1 = cx + r * Math.cos(angle);
+    var y1 = cy + r * Math.sin(angle);
+    var x2 = cx + r * Math.cos(angle + sliceAngle);
+    var y2 = cy + r * Math.sin(angle + sliceAngle);
+    var largeArc = sliceAngle > Math.PI ? 1 : 0;
 
-    var tooltip = document.createElement("span");
-    tooltip.className = "bar-tooltip";
-    tooltip.textContent = day.minutes + "分钟";
-    bar.appendChild(tooltip);
+    var path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    var d = "M " + cx + " " + cy + " ";
+    d += "L " + x1 + " " + y1 + " ";
+    d += "A " + r + " " + r + " 0 " + largeArc + " 1 " + x2 + " " + y2 + " Z";
+    path.setAttribute("d", d);
+    path.setAttribute("fill", PIE_COLORS[i % PIE_COLORS.length]);
+    path.setAttribute("opacity", "0.85");
+    path.setAttribute("stroke", "rgba(255,255,255,0.3)");
+    path.setAttribute("stroke-width", "1");
+    path.style.cursor = "pointer";
 
-    wrap.appendChild(bar);
+    // Hover/点击 事件
+    (function(task, color) {
+      path.addEventListener("pointerenter", function() {
+        pieCenterIcon.textContent = "🔍";
+        pieCenterText.textContent = task.name;
+        path.setAttribute("opacity", "1");
+      });
+      path.addEventListener("pointerleave", function() {
+        pieCenterIcon.textContent = "🍅";
+        pieCenterText.textContent = completed.length + " 个任务";
+        path.setAttribute("opacity", "0.85");
+      });
+      // 移动端触摸
+      path.addEventListener("touchstart", function(e) {
+        pieCenterIcon.textContent = "🔍";
+        pieCenterText.textContent = task.name;
+        path.setAttribute("opacity", "1");
+      }, { passive: true });
+    })(t, PIE_COLORS[i % PIE_COLORS.length]);
 
-    var label = document.createElement("span");
-    label.className = "chart-bar-label";
-    label.textContent = day.label;
+    pieChartSvg.appendChild(path);
 
-    chartBars.appendChild(wrap);
-    chartDays.appendChild(label);
+    // 外侧标注线（指向饼图内部）
+    var labelX = cx + labelRadius * Math.cos(midAngle);
+    var labelY = cy + labelRadius * Math.sin(midAngle);
+    var outwardX = cx + (labelRadius + 8) * Math.cos(midAngle);
+    var outwardY = cy + (labelRadius + 8) * Math.sin(midAngle);
+
+    var line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+    line.setAttribute("x1", labelX);
+    line.setAttribute("y1", labelY);
+    line.setAttribute("x2", outwardX);
+    line.setAttribute("y2", outwardY);
+    line.setAttribute("class", "pie-label-line");
+
+    // 标注文字：耗时
+    var focusMin = Math.round(((t.completions || 1) * totalWorkSec) / 60);
+    var txt = document.createElementNS("http://www.w3.org/2000/svg", "text");
+    txt.setAttribute("x", outwardX + (outwardX >= cx ? 6 : -6));
+    txt.setAttribute("y", outwardY + 5);
+    txt.setAttribute("text-anchor", outwardX >= cx ? "start" : "end");
+    txt.setAttribute("class", "pie-label-text");
+    txt.textContent = focusMin + "分钟";
+
+    pieChartSvg.appendChild(line);
+    pieChartSvg.appendChild(txt);
+
+    angle += sliceAngle;
   });
 }
 
@@ -541,7 +593,12 @@ function clearAllStats() {
   if (confirm("确定要清除所有调查记录吗？此操作不可撤销。")) {
     localStorage.removeItem(STORAGE_KEY);
     sessionInterrupts = 0;
+    // 清除任务完成计数
+    var tasks = loadTasks();
+    tasks.forEach(function(t) { t.done = false; t.completions = 0; });
+    saveTasks(tasks);
     renderStats(loadStats());
+    renderTaskList();
     showToast("调查记录已清除");
   }
 }
@@ -646,7 +703,7 @@ function scrollPickerTo(totalSec, maxHours) {
 }
 
 function scrollColumnTo(column, index, itemH) {
-  column.scrollTo({ top: index * itemH, behavior: "instant" });
+  column.scrollTo({ top: index * itemH, behavior: "auto" });
   setTimeout(() => updatePickerSelection(column), 50);
 }
 
@@ -1013,9 +1070,10 @@ function escapeHtml(str) {
 
 function autoCompleteOneTask() {
   const tasks = loadTasks();
-  const undone = tasks.find((t) => !t.done);
+  const undone = tasks.find(function(t) { return !t.done; });
   if (undone) {
     undone.done = true;
+    undone.completions = (undone.completions || 0) + 1;
     saveTasks(tasks);
     renderTaskList();
   }
@@ -1031,6 +1089,7 @@ function addCustomTask(name) {
     id: "c" + (maxId + 1),
     name: name.trim(),
     done: false,
+    completions: 0,
     isPreset: false,
     order: tasks.length,
   });

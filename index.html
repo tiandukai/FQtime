@@ -43,6 +43,7 @@
   --shadow-card: 0 8px 32px rgba(0, 0, 0, 0.1);
   --shadow-blue: 0 4px 16px rgba(66, 165, 245, 0.3);
   --shadow-amber: 0 4px 16px rgba(255, 152, 0, 0.2);
+  --shadow-pink: 0 4px 16px rgba(236, 64, 122, 0.2);
   --radius-sm: 12px;
   --radius: 18px;
   --radius-lg: 24px;
@@ -51,19 +52,29 @@
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
 body {
   font-family: "Microsoft YaHei", "PingFang SC", "Noto Sans SC", sans-serif;
   background: linear-gradient(160deg, #0a1628 0%, #0f2440 40%, #0d1b35 100%);
   color: var(--text-dark);
   min-height: 100vh;
+  min-height: 100dvh;
   display: flex;
   justify-content: center;
   align-items: flex-start;
   padding: 20px;
+  padding-top: calc(20px + env(safe-area-inset-top));
+  padding-bottom: calc(20px + env(safe-area-inset-bottom));
+  padding-left: calc(20px + env(safe-area-inset-left));
+  padding-right: calc(20px + env(safe-area-inset-right));
   user-select: none;
   -webkit-user-select: none;
   -webkit-tap-highlight-color: transparent;
   overflow-x: hidden;
+  overscroll-behavior: none;
   position: relative;
 }
 
@@ -312,7 +323,6 @@ body {
   gap: 18px;
   box-shadow: var(--shadow-card);
   position: relative;
-  overflow: hidden;
 }
 
 .case-file-card::before {
@@ -703,6 +713,7 @@ body {
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
   -ms-overflow-style: none;
+  touch-action: pan-y;
 }
 .picker-column::-webkit-scrollbar {
   display: none;
@@ -794,48 +805,103 @@ body {
   color: #37474f;
 }
 
-.stats-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 12px;
-  margin-bottom: 16px;
-}
-
-.stat-card {
-  background: rgba(227, 242, 253, 0.5);
-  border-radius: var(--radius-sm);
-  padding: 14px 14px;
+/* 专注时长大字 */
+.focus-hero {
   text-align: center;
-  border: 1px solid rgba(187, 222, 251, 0.3);
-  transition: all var(--transition);
+  padding: 18px 0 8px;
+  margin-bottom: 12px;
 }
-
-.stat-card:hover {
-  border-color: rgba(244, 143, 177, 0.4);
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-soft);
-}
-
-.stat-icon {
+.focus-hero-value {
   display: block;
-  font-size: 1rem;
-  margin-bottom: 4px;
-  opacity: 0.6;
-}
-
-.stat-value {
-  display: block;
-  font-size: 1.6rem;
-  font-weight: 700;
+  font-size: 2.8rem;
+  font-weight: 800;
   color: #42a5f5;
   font-variant-numeric: tabular-nums;
+  font-family: "SF Mono", "Cascadia Code", "Consolas", monospace;
+  letter-spacing: 2px;
+  text-shadow: 0 2px 12px rgba(66, 165, 245, 0.3);
 }
-
-.stat-label {
+.focus-hero-unit {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #42a5f5;
+  margin-left: 4px;
+  letter-spacing: 1px;
+}
+.focus-hero-label {
   display: block;
   font-size: 0.72rem;
   color: var(--text-mid);
-  margin-top: 2px;
+  margin-top: 4px;
+}
+
+/* 饼图区域 */
+.pie-chart-wrap {
+  position: relative;
+  width: 200px;
+  height: 200px;
+  margin: 0 auto 16px;
+}
+.pie-chart-svg {
+  width: 100%;
+  height: 100%;
+}
+.pie-chart-center {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+.pie-center-icon {
+  font-size: 0.9rem;
+  opacity: 0.5;
+}
+.pie-center-text {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #37474f;
+  max-width: 80px;
+  line-height: 1.3;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+/* 饼图标注线 */
+.pie-label-line {
+  stroke: rgba(55, 71, 79, 0.4);
+  stroke-width: 1;
+}
+.pie-label-text {
+  font-size: 0.65rem;
+  fill: #607d8b;
+  font-weight: 600;
+}
+
+/* 底栏迷你统计 */
+.stats-mini-row {
+  display: flex;
+  justify-content: center;
+  gap: 24px;
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+}
+.stats-mini-item {
+  font-size: 0.75rem;
+  color: var(--text-mid);
+  letter-spacing: 0.5px;
+}
+.stats-mini-item strong {
+  color: #37474f;
+  font-weight: 700;
 }
 
 /* 每日目标进度条 */
@@ -862,79 +928,6 @@ body {
   border-radius: 3px;
   transition: width 0.6s ease;
   box-shadow: 0 0 8px rgba(236, 64, 122, 0.3);
-}
-
-/* 每周柱状图 */
-.weekly-chart {
-  margin-bottom: 18px;
-  padding: 0 2px;
-}
-.chart-header {
-  font-size: 0.75rem;
-  color: var(--text-mid);
-  margin-bottom: 12px;
-}
-.chart-bars {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  height: 120px;
-  padding: 0 4px;
-  gap: 6px;
-}
-.chart-bar-wrap {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  height: 100%;
-  justify-content: flex-end;
-}
-.chart-bar {
-  width: 100%;
-  max-width: 36px;
-  border-radius: 6px 6px 2px 2px;
-  background: rgba(66, 165, 245, 0.18);
-  min-height: 4px;
-  transition: height 0.5s ease;
-  position: relative;
-}
-.chart-bar.has-data {
-  background: linear-gradient(180deg, #64b5f6, #42a5f5);
-  box-shadow: 0 2px 8px rgba(66, 165, 245, 0.3);
-}
-.chart-bar.today {
-  background: linear-gradient(180deg, #ec407a, #f06292);
-  box-shadow: 0 2px 8px rgba(236, 64, 122, 0.35);
-}
-.chart-days {
-  display: flex;
-  justify-content: space-between;
-  padding: 0 4px;
-  gap: 6px;
-}
-.chart-days .chart-bar-label {
-  flex: 1;
-  font-size: 0.65rem;
-  color: var(--text-mid);
-  margin-top: 6px;
-  text-align: center;
-}
-.bar-tooltip {
-  position: absolute;
-  top: -22px;
-  left: 50%;
-  transform: translateX(-50%);
-  font-size: 0.62rem;
-  color: #42a5f5;
-  white-space: nowrap;
-  opacity: 0;
-  transition: opacity 0.2s;
-  pointer-events: none;
-}
-.chart-bar:hover .bar-tooltip,
-.chart-bar:active .bar-tooltip {
-  opacity: 1;
 }
 
 .btn-text {
@@ -1418,7 +1411,8 @@ body {
   .btn-primary { padding: 12px 24px; font-size: 0.85rem; }
   .btn-icon-only { width: 40px; height: 40px; font-size: 1rem; }
   .settings-section, .stats-section { padding: 16px 14px; }
-  .stat-value { font-size: 1.3rem; }
+  .focus-hero-value { font-size: 2.2rem; }
+  .pie-chart-wrap { width: 160px; height: 160px; }
   .controls { gap: 8px; }
 
   /* 照片墙 — 移动端缩小 + 四角分布，互不遮挡 */
@@ -1428,6 +1422,7 @@ body {
   .photo-4 { top: 38%; left: 1%; width: 160px; }
   .photo-5 { top: 36%; right: 2%; width: 140px; }
 }
+
 
 </style>
 </head>
@@ -1521,7 +1516,7 @@ body {
       </div>
       <div class="task-list" id="taskList"></div>
       <div class="task-add-row">
-        <input type="text" class="task-add-input" id="taskAddInput" placeholder="＋ 添加自定义案件..." maxlength="30">
+        <input type="text" class="task-add-input" id="taskAddInput" placeholder="＋ 添加自定义案件..." maxlength="30" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="done">
         <button class="btn-task-add" id="btnTaskAdd">添加</button>
       </div>
     </section>
@@ -1565,39 +1560,22 @@ body {
         <span class="evidence-icon">📋</span>
         <h2 class="stats-title">推理记录档案</h2>
       </div>
-      <div class="stats-grid">
-        <div class="stat-card">
-          <span class="stat-icon">📁</span>
-          <span class="stat-value" id="statToday">0</span>
-          <span class="stat-label">今日解决案件</span>
-        </div>
-        <div class="stat-card">
-          <span class="stat-icon">🏆</span>
-          <span class="stat-value" id="statTotal">0</span>
-          <span class="stat-label">累计解决案件</span>
-        </div>
-        <div class="stat-card">
-          <span class="stat-icon">🔥</span>
-          <span class="stat-value" id="statStreak">0</span>
-          <span class="stat-label">连续推理天数</span>
-        </div>
-        <div class="stat-card">
-          <span class="stat-icon">⏱</span>
-          <span class="stat-value" id="statFocusTime">0 分钟</span>
-          <span class="stat-label">今日推理时长</span>
-        </div>
-        <div class="stat-card">
-          <span class="stat-icon">📵</span>
-          <span class="stat-value" id="statInterrupts">0</span>
-          <span class="stat-label">今日打断次数</span>
+      <div class="focus-hero">
+        <span class="focus-hero-value" id="focusHeroValue">0</span>
+        <span class="focus-hero-unit">分钟</span>
+        <span class="focus-hero-label">今日专注时长</span>
+      </div>
+      <div class="pie-chart-wrap" id="pieChartWrap">
+        <svg class="pie-chart-svg" id="pieChartSvg" viewBox="0 0 200 200"></svg>
+        <div class="pie-chart-center" id="pieChartCenter">
+          <span class="pie-center-icon" id="pieCenterIcon">-</span>
+          <span class="pie-center-text" id="pieCenterText">暂无任务</span>
         </div>
       </div>
-      <div class="weekly-chart" id="weeklyChart">
-        <div class="chart-header">
-          <span>本周推理时长</span>
-        </div>
-        <div class="chart-bars" id="chartBars"></div>
-        <div class="chart-days" id="chartDays"></div>
+      <div class="stats-mini-row">
+        <span class="stats-mini-item">🍅 <strong id="statToday">0</strong> 案件</span>
+        <span class="stats-mini-item">🔥 <strong id="statStreak">0</strong> 天</span>
+        <span class="stats-mini-item">📵 <strong id="statInterrupts">0</strong> 打断</span>
       </div>
       <div class="daily-goal">
         <div class="goal-header">
@@ -1650,7 +1628,6 @@ body {
    支持自定义时间 + 鼓励话语
    ============================================ */
 
-(function () {
   "use strict";
 
   // ========== 常量配置 ==========
@@ -1711,14 +1688,15 @@ const pickerTabs = document.querySelectorAll(".picker-tab");
 const encourageText = document.getElementById("encourageText");
 
 const statToday = document.getElementById("statToday");
-const statTotal = document.getElementById("statTotal");
 const statStreak = document.getElementById("statStreak");
-const statFocusTime = document.getElementById("statFocusTime");
 const statInterrupts = document.getElementById("statInterrupts");
-const chartBars = document.getElementById("chartBars");
-const chartDays = document.getElementById("chartDays");
 const goalFill = document.getElementById("goalFill");
 const goalLabel = document.getElementById("goalLabel");
+const focusHeroValue = document.getElementById("focusHeroValue");
+const pieChartSvg = document.getElementById("pieChartSvg");
+const pieChartCenter = document.getElementById("pieChartCenter");
+const pieCenterIcon = document.getElementById("pieCenterIcon");
+const pieCenterText = document.getElementById("pieCenterText");
 
 // ========== 状态 ==========
 let mode = MODE_WORK;
@@ -2115,71 +2093,122 @@ function refreshStatsForToday() {
 
 function renderStats(stats) {
   statToday.textContent = String(stats.todayCount);
-  statTotal.textContent = String(stats.totalCount);
   statStreak.textContent = String(stats.streakDays);
-  statFocusTime.textContent = `${stats.todayFocusMinutes} 分钟`;
   statInterrupts.textContent = String(stats.todayInterrupts || 0);
 
-  const pct = Math.min(100, Math.round((stats.todayCount / DAILY_GOAL) * 100));
-  goalFill.style.width = `${pct}%`;
-  goalLabel.textContent = `${stats.todayCount} / ${DAILY_GOAL} 案件`;
+  focusHeroValue.textContent = String(stats.todayFocusMinutes);
 
-  renderWeeklyChart(stats);
+  var pct = Math.min(100, Math.round((stats.todayCount / DAILY_GOAL) * 100));
+  goalFill.style.width = pct + "%";
+  goalLabel.textContent = stats.todayCount + " / " + DAILY_GOAL + " 案件";
+
+  renderPieChart(stats);
 }
 
-function renderWeeklyChart(stats) {
-  const today = getTodayStr();
-  const data = stats.weeklyData || [];
-  // 生成最近 7 天
-  const days = [];
-  for (let i = 6; i >= 0; i--) {
-    const d = new Date();
-    d.setDate(d.getDate() - i);
-    const dateStr = d.getFullYear() + "-" +
-      String(d.getMonth() + 1).padStart(2, "0") + "-" +
-      String(d.getDate()).padStart(2, "0");
-    const entry = data.find(function(e) { return e.date === dateStr; });
-    const dayNames = ["日", "一", "二", "三", "四", "五", "六"];
-    days.push({
-      date: dateStr,
-      label: dayNames[d.getDay()],
-      minutes: entry ? entry.minutes : 0,
-      isToday: dateStr === today,
-    });
+// 饼图色板
+var PIE_COLORS = ["#42a5f5", "#ff9800", "#66bb6a", "#ef5350", "#ab47bc", "#26c6da", "#ffa726", "#5c6bc0"];
+
+function renderPieChart(stats) {
+  var tasks = loadTasks();
+  var completed = tasks.filter(function(t) { return t.done && (t.completions || 0) > 0; });
+
+  pieChartSvg.innerHTML = "";
+
+  if (completed.length === 0) {
+    // 空状态：灰色环
+    pieCenterIcon.textContent = "-";
+    pieCenterText.textContent = "暂无任务";
+    var emptyCircle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+    emptyCircle.setAttribute("cx", "100");
+    emptyCircle.setAttribute("cy", "100");
+    emptyCircle.setAttribute("r", "70");
+    emptyCircle.setAttribute("fill", "none");
+    emptyCircle.setAttribute("stroke", "rgba(255,255,255,0.15)");
+    emptyCircle.setAttribute("stroke-width", "20");
+    pieChartSvg.appendChild(emptyCircle);
+    return;
   }
 
-  const maxMin = Math.max.apply(null, days.map(function(d) { return d.minutes; }));
-  const maxHeight = 110; // px
+  pieCenterIcon.textContent = "🍅";
+  pieCenterText.textContent = completed.length + " 个任务";
 
-  chartBars.innerHTML = "";
-  chartDays.innerHTML = "";
+  var cx = 100, cy = 100, r = 70, strokeW = 20;
+  var total = 0;
+  completed.forEach(function(t) { total += (t.completions || 1); });
 
-  days.forEach(function(day) {
-    var wrap = document.createElement("div");
-    wrap.className = "chart-bar-wrap";
+  var angle = -Math.PI / 2; // 从顶部开始
+  var labelRadius = r + strokeW / 2 + 16;
 
-    var bar = document.createElement("div");
-    bar.className = "chart-bar";
-    if (day.minutes > 0) bar.classList.add("has-data");
-    if (day.isToday) bar.classList.add("today");
+  completed.forEach(function(t, i) {
+    var sliceAngle = ((t.completions || 1) / total) * Math.PI * 2;
+    var midAngle = angle + sliceAngle / 2;
 
-    var h = maxMin > 0 ? Math.max(6, Math.round((day.minutes / maxMin) * maxHeight)) : 6;
-    bar.style.height = h + "px";
-    bar.title = day.minutes + " 分钟";
+    // 扇区路径
+    var x1 = cx + r * Math.cos(angle);
+    var y1 = cy + r * Math.sin(angle);
+    var x2 = cx + r * Math.cos(angle + sliceAngle);
+    var y2 = cy + r * Math.sin(angle + sliceAngle);
+    var largeArc = sliceAngle > Math.PI ? 1 : 0;
 
-    var tooltip = document.createElement("span");
-    tooltip.className = "bar-tooltip";
-    tooltip.textContent = day.minutes + "分钟";
-    bar.appendChild(tooltip);
+    var path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    var d = "M " + cx + " " + cy + " ";
+    d += "L " + x1 + " " + y1 + " ";
+    d += "A " + r + " " + r + " 0 " + largeArc + " 1 " + x2 + " " + y2 + " Z";
+    path.setAttribute("d", d);
+    path.setAttribute("fill", PIE_COLORS[i % PIE_COLORS.length]);
+    path.setAttribute("opacity", "0.85");
+    path.setAttribute("stroke", "rgba(255,255,255,0.3)");
+    path.setAttribute("stroke-width", "1");
+    path.style.cursor = "pointer";
 
-    wrap.appendChild(bar);
+    // Hover/点击 事件
+    (function(task, color) {
+      path.addEventListener("pointerenter", function() {
+        pieCenterIcon.textContent = "🔍";
+        pieCenterText.textContent = task.name;
+        path.setAttribute("opacity", "1");
+      });
+      path.addEventListener("pointerleave", function() {
+        pieCenterIcon.textContent = "🍅";
+        pieCenterText.textContent = completed.length + " 个任务";
+        path.setAttribute("opacity", "0.85");
+      });
+      // 移动端触摸
+      path.addEventListener("touchstart", function(e) {
+        pieCenterIcon.textContent = "🔍";
+        pieCenterText.textContent = task.name;
+        path.setAttribute("opacity", "1");
+      }, { passive: true });
+    })(t, PIE_COLORS[i % PIE_COLORS.length]);
 
-    var label = document.createElement("span");
-    label.className = "chart-bar-label";
-    label.textContent = day.label;
+    pieChartSvg.appendChild(path);
 
-    chartBars.appendChild(wrap);
-    chartDays.appendChild(label);
+    // 外侧标注线（指向饼图内部）
+    var labelX = cx + labelRadius * Math.cos(midAngle);
+    var labelY = cy + labelRadius * Math.sin(midAngle);
+    var outwardX = cx + (labelRadius + 8) * Math.cos(midAngle);
+    var outwardY = cy + (labelRadius + 8) * Math.sin(midAngle);
+
+    var line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+    line.setAttribute("x1", labelX);
+    line.setAttribute("y1", labelY);
+    line.setAttribute("x2", outwardX);
+    line.setAttribute("y2", outwardY);
+    line.setAttribute("class", "pie-label-line");
+
+    // 标注文字：耗时
+    var focusMin = Math.round(((t.completions || 1) * totalWorkSec) / 60);
+    var txt = document.createElementNS("http://www.w3.org/2000/svg", "text");
+    txt.setAttribute("x", outwardX + (outwardX >= cx ? 6 : -6));
+    txt.setAttribute("y", outwardY + 5);
+    txt.setAttribute("text-anchor", outwardX >= cx ? "start" : "end");
+    txt.setAttribute("class", "pie-label-text");
+    txt.textContent = focusMin + "分钟";
+
+    pieChartSvg.appendChild(line);
+    pieChartSvg.appendChild(txt);
+
+    angle += sliceAngle;
   });
 }
 
@@ -2187,7 +2216,12 @@ function clearAllStats() {
   if (confirm("确定要清除所有调查记录吗？此操作不可撤销。")) {
     localStorage.removeItem(STORAGE_KEY);
     sessionInterrupts = 0;
+    // 清除任务完成计数
+    var tasks = loadTasks();
+    tasks.forEach(function(t) { t.done = false; t.completions = 0; });
+    saveTasks(tasks);
     renderStats(loadStats());
+    renderTaskList();
     showToast("调查记录已清除");
   }
 }
@@ -2292,7 +2326,7 @@ function scrollPickerTo(totalSec, maxHours) {
 }
 
 function scrollColumnTo(column, index, itemH) {
-  column.scrollTo({ top: index * itemH, behavior: "instant" });
+  column.scrollTo({ top: index * itemH, behavior: "auto" });
   setTimeout(() => updatePickerSelection(column), 50);
 }
 
@@ -2659,9 +2693,10 @@ function escapeHtml(str) {
 
 function autoCompleteOneTask() {
   const tasks = loadTasks();
-  const undone = tasks.find((t) => !t.done);
+  const undone = tasks.find(function(t) { return !t.done; });
   if (undone) {
     undone.done = true;
+    undone.completions = (undone.completions || 0) + 1;
     saveTasks(tasks);
     renderTaskList();
   }
@@ -2677,6 +2712,7 @@ function addCustomTask(name) {
     id: "c" + (maxId + 1),
     name: name.trim(),
     done: false,
+    completions: 0,
     isPreset: false,
     order: tasks.length,
   });
@@ -2726,6 +2762,8 @@ function init() {
   } else {
     init();
   }
+
+
 
 
 </script>
